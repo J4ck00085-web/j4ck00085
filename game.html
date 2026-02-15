@@ -1,18 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Space Shooter</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            margin: 0;
             background: #000;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
-            touch-action: none; /* Verhindert Scrollen auf Mobile */
+            touch-action: none;
         }
+
         canvas {
             border: 3px solid #0f0;
             width: 100vw;
@@ -20,7 +24,94 @@
             display: block;
             object-fit: contain;
         }
-        /* Mobile Steuerung - optimiert */
+
+        /* Settings Button */
+        .settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 255, 0, 0.4);
+            border: 3px solid #0f0;
+            border-radius: 50%;
+            font-size: 35px;
+            color: #0f0;
+            cursor: pointer;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .settings-btn:active {
+            background: rgba(0, 255, 0, 0.7);
+            transform: scale(0.95);
+        }
+
+        /* Settings Menu */
+        .settings-menu {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 20, 0, 0.95);
+            border: 3px solid #0f0;
+            border-radius: 20px;
+            padding: 30px;
+            z-index: 3000;
+            display: none;
+            min-width: 300px;
+        }
+
+        .settings-menu.active {
+            display: block;
+        }
+
+        .settings-title {
+            color: #0f0;
+            font-size: 32px;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+
+        .settings-option {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #0f0;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin: 10px 0;
+            color: #0f0;
+            font-size: 20px;
+            font-family: Arial, sans-serif;
+            cursor: pointer;
+            text-align: center;
+            user-select: none;
+        }
+
+        .settings-option:active {
+            background: rgba(0, 255, 0, 0.5);
+        }
+
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2500;
+            display: none;
+        }
+
+        .settings-overlay.active {
+            display: block;
+        }
+
+        /* Mobile Controls */
         .mobile-controls {
             position: fixed;
             bottom: 30px;
@@ -30,6 +121,7 @@
             z-index: 1000;
             pointer-events: none;
         }
+
         .direction-pad {
             position: absolute;
             left: 30px;
@@ -37,6 +129,7 @@
             display: flex;
             gap: 20px;
         }
+
         .control-btn {
             background: rgba(0, 255, 0, 0.4);
             border: 3px solid #0f0;
@@ -53,10 +146,12 @@
             justify-content: center;
             font-weight: bold;
         }
+
         .control-btn:active {
             background: rgba(0, 255, 0, 0.7);
             transform: scale(0.95);
         }
+
         .shoot-btn {
             position: absolute;
             right: 30px;
@@ -68,12 +163,14 @@
             border-color: #f00;
             color: #f00;
         }
+
         .shoot-btn:active {
             background: rgba(255, 0, 0, 0.7);
         }
+
         @media (max-width: 768px), (max-height: 768px) {
             .mobile-controls {
-                display: flex !important;
+                display: block !important;
             }
         }
     </style>
@@ -81,7 +178,23 @@
 <body>
     <canvas id="game" width="2560" height="1440"></canvas>
 
-    <!-- Mobile Steuerung - optimiert -->
+    <!-- Settings Button -->
+    <button class="settings-btn" id="settingsBtn">⚙️</button>
+
+    <!-- Settings Overlay -->
+    <div class="settings-overlay" id="settingsOverlay"></div>
+
+    <!-- Settings Menu -->
+    <div class="settings-menu" id="settingsMenu">
+        <div class="settings-title">EINSTELLUNGEN</div>
+        <div class="settings-option" id="resumeBtn">▶️ Fortsetzen</div>
+        <div class="settings-option" id="restartBtn">🔄 Neustart</div>
+        <div class="settings-option" id="soundBtn">🔊 Sound: AN</div>
+        <div class="settings-option" id="fullscreenBtn">⛶ Vollbild</div>
+        <div class="settings-option" id="exitBtn">❌ Verlassen</div>
+    </div>
+
+    <!-- Mobile Controls -->
     <div class="mobile-controls">
         <div class="direction-pad">
             <button class="control-btn" id="leftBtn">◄</button>
@@ -91,56 +204,26 @@
     </div>
 
     <script>
+        // ===== CANVAS SETUP =====
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
 
-        // Vollbild-Modus automatisch aktivieren
-        function enterFullscreen() {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(err => console.log("Fullscreen error:", err));
-            } else if (elem.webkitRequestFullscreen) {
-                elem.webkitRequestFullscreen();
-            } else if (elem.mozRequestFullScreen) {
-                elem.mozRequestFullScreen();
-            } else if (elem.msRequestFullscreen) {
-                elem.msRequestFullscreen();
-            }
-        }
-
-        // ESC-Taste zum Verlassen von Vollbild (funktioniert automatisch im Browser)
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && document.fullscreenElement) {
-                document.exitFullscreen();
-            }
-        });
-
-        // Beim ersten Klick/Touch Vollbild aktivieren
-        let fullscreenActivated = false;
-        function tryEnterFullscreen() {
-            if (!fullscreenActivated) {
-                enterFullscreen();
-                fullscreenActivated = true;
-            }
-        }
-
-        document.addEventListener('click', tryEnterFullscreen, { once: true });
-        document.addEventListener('touchstart', tryEnterFullscreen, { once: true });
-
+        // ===== GAME STATE =====
         let player = { x: 1230, y: 1340, width: 50, height: 40 };
         let bullets = [];
         let enemies = [];
         let powerups = [];
         let score = 0;
-        let weaponType = 'normal'; // normal, triple, rapid
+        let weaponType = 'normal';
         let rapidFireTimer = 0;
         let isPaused = false;
+        let soundEnabled = true;
 
-        // Weltraum-Hintergrund
+        // ===== BACKGROUND =====
         let stars = [];
         let distantStars = [];
 
-        // Kleine entfernte Sterne (Hintergrundebene) - 2K angepasst
+        // Sterne initialisieren
         for (let i = 0; i < 400; i++) {
             distantStars.push({
                 x: Math.random() * 2560,
@@ -150,7 +233,6 @@
             });
         }
 
-        // Hauptsterne (verschiedene Ebenen für Tiefe) - 2K angepasst
         for (let i = 0; i < 200; i++) {
             stars.push({
                 x: Math.random() * 2560,
@@ -162,47 +244,153 @@
                 color: Math.random() > 0.8 ? 'blue' : (Math.random() > 0.5 ? 'white' : 'yellow')
             });
         }
-        
-        // Steuerung
+
+        // ===== CONTROLS =====
         let moveLeft = false;
         let moveRight = false;
-        
-        document.addEventListener('keydown', e => {
-            // ESC-Taste für Vollbild-Exit
-            if (e.key === 'Escape') {
-                if (document.fullscreenElement) {
+
+        // ===== FULLSCREEN =====
+        function enterFullscreen() {
+            const elem = document.documentElement;
+            try {
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.mozRequestFullScreen) {
+                    elem.mozRequestFullScreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
+            } catch (err) {
+                console.log("Fullscreen not supported:", err);
+            }
+        }
+
+        function exitFullscreen() {
+            try {
+                if (document.exitFullscreen) {
                     document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            } catch (err) {
+                console.log("Exit fullscreen error:", err);
+            }
+        }
+
+        // Auto-Fullscreen beim ersten Touch/Click
+        let fullscreenActivated = false;
+        function tryEnterFullscreen() {
+            if (!fullscreenActivated) {
+                enterFullscreen();
+                fullscreenActivated = true;
+            }
+        }
+
+        document.addEventListener('click', tryEnterFullscreen, { once: true });
+        document.addEventListener('touchstart', tryEnterFullscreen, { once: true });
+
+        // ===== SETTINGS MENU =====
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsMenu = document.getElementById('settingsMenu');
+        const settingsOverlay = document.getElementById('settingsOverlay');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const soundBtn = document.getElementById('soundBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const exitBtn = document.getElementById('exitBtn');
+
+        function openSettings() {
+            isPaused = true;
+            settingsMenu.classList.add('active');
+            settingsOverlay.classList.add('active');
+        }
+
+        function closeSettings() {
+            isPaused = false;
+            settingsMenu.classList.remove('active');
+            settingsOverlay.classList.remove('active');
+        }
+
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openSettings();
+        });
+
+        settingsOverlay.addEventListener('click', closeSettings);
+
+        resumeBtn.addEventListener('click', closeSettings);
+
+        restartBtn.addEventListener('click', () => {
+            // Game neu starten
+            player = { x: 1230, y: 1340, width: 50, height: 40 };
+            bullets = [];
+            enemies = [];
+            powerups = [];
+            score = 0;
+            weaponType = 'normal';
+            rapidFireTimer = 0;
+            closeSettings();
+        });
+
+        soundBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundBtn.textContent = soundEnabled ? '🔊 Sound: AN' : '🔇 Sound: AUS';
+        });
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (document.fullscreenElement) {
+                exitFullscreen();
+            } else {
+                enterFullscreen();
+            }
+        });
+
+        exitBtn.addEventListener('click', () => {
+            if (confirm('Spiel wirklich verlassen?')) {
+                window.close();
+                // Fallback wenn window.close() nicht funktioniert
+                window.location.href = 'about:blank';
+            }
+        });
+
+        // ===== KEYBOARD CONTROLS =====
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                if (settingsMenu.classList.contains('active')) {
+                    closeSettings();
+                } else if (document.fullscreenElement) {
+                    exitFullscreen();
                 }
                 return;
             }
 
-            // Pause-Taste (P)
             if (e.key === 'p' || e.key === 'P') {
-                isPaused = !isPaused;
+                if (settingsMenu.classList.contains('active')) return;
+                openSettings();
                 return;
             }
 
-            if (isPaused) return; // Keine Eingaben während Pause
+            if (isPaused) return;
 
             if (e.key === 'ArrowLeft') moveLeft = true;
             if (e.key === 'ArrowRight') moveRight = true;
             if (e.key === ' ' && !e.repeat) {
-                if (weaponType === 'triple') {
-                    bullets.push({ x: player.x + 15, y: player.y, width: 4, height: 10 });
-                    bullets.push({ x: player.x + 23, y: player.y, width: 4, height: 10 });
-                    bullets.push({ x: player.x + 31, y: player.y, width: 4, height: 10 });
-                } else {
-                    bullets.push({ x: player.x + 23, y: player.y, width: 4, height: 10 });
-                }
+                shoot();
             }
         });
-        
+
         document.addEventListener('keyup', e => {
             if (e.key === 'ArrowLeft') moveLeft = false;
             if (e.key === 'ArrowRight') moveRight = false;
         });
 
-        // Mobile Touch-Steuerung
+        // ===== MOBILE TOUCH CONTROLS =====
         const leftBtn = document.getElementById('leftBtn');
         const rightBtn = document.getElementById('rightBtn');
         const shootBtn = document.getElementById('shootBtn');
@@ -227,6 +415,12 @@
 
         shootBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
+            shoot();
+        });
+
+        // ===== SHOOT FUNCTION =====
+        function shoot() {
+            if (isPaused) return;
             if (weaponType === 'triple') {
                 bullets.push({ x: player.x + 15, y: player.y, width: 4, height: 10 });
                 bullets.push({ x: player.x + 23, y: player.y, width: 4, height: 10 });
@@ -234,11 +428,11 @@
             } else {
                 bullets.push({ x: player.x + 23, y: player.y, width: 4, height: 10 });
             }
-        });
-        
-        // Gegner spawnen (2K angepasst)
+        }
+
+        // ===== ENEMY SPAWNER =====
         setInterval(() => {
-            // 20% Chance für Boss-Schiff
+            if (isPaused) return;
             if (Math.random() < 0.2) {
                 enemies.push({
                     x: Math.random() * 2400,
@@ -260,8 +454,9 @@
             }
         }, 1500);
 
-        // Power-Ups spawnen (10 verschiedene Typen!) - 2K angepasst
+        // ===== POWERUP SPAWNER =====
         setInterval(() => {
+            if (isPaused) return;
             const types = ['triple', 'rapid', 'shield', 'laser', 'nuke', 'speed', 'slow', 'magnet', 'invincible', 'multishot'];
             const type = types[Math.floor(Math.random() * types.length)];
             powerups.push({
@@ -272,76 +467,12 @@
                 type: type
             });
         }, 8000);
-        
-        // Spieler-Raumschiff zeichnen
-        function drawPlayerShip(x, y, width, height) {
-            // Hauptkörper (grün)
-            ctx.fillStyle = '#0f0';
-            ctx.beginPath();
-            ctx.moveTo(x + width/2, y);
-            ctx.lineTo(x + width, y + height * 0.7);
-            ctx.lineTo(x + width * 0.7, y + height);
-            ctx.lineTo(x + width * 0.3, y + height);
-            ctx.lineTo(x, y + height * 0.7);
-            ctx.closePath();
-            ctx.fill();
 
-            // Flügel (dunkelgrün)
-            ctx.fillStyle = '#0a0';
-            ctx.fillRect(x, y + height * 0.5, width * 0.2, height * 0.4);
-            ctx.fillRect(x + width * 0.8, y + height * 0.5, width * 0.2, height * 0.4);
-
-            // Cockpit (hellgrün)
-            ctx.fillStyle = '#8f8';
-            ctx.beginPath();
-            ctx.arc(x + width/2, y + height * 0.5, width * 0.15, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Triebwerke (blau-weiß)
-            ctx.fillStyle = '#0ff';
-            ctx.fillRect(x + width * 0.35, y + height * 0.95, width * 0.1, height * 0.08);
-            ctx.fillRect(x + width * 0.55, y + height * 0.95, width * 0.1, height * 0.08);
-        }
-
-        // Gegner-Raumschiff zeichnen
-        function drawEnemyShip(x, y, width, height, isBoss) {
-            const color = isBoss ? '#f0f' : '#f00'; // Boss = Magenta
-            ctx.fillStyle = color;
-            // Hauptkörper
-            ctx.beginPath();
-            ctx.moveTo(x + width/2, y + height);
-            ctx.lineTo(x, y + height * 0.3);
-            ctx.lineTo(x + width * 0.3, y);
-            ctx.lineTo(x + width * 0.7, y);
-            ctx.lineTo(x + width, y + height * 0.3);
-            ctx.closePath();
-            ctx.fill();
-
-            // Flügel
-            ctx.fillStyle = isBoss ? '#a0a' : '#a00';
-            ctx.fillRect(x, y + height * 0.4, width * 0.2, height * 0.3);
-            ctx.fillRect(x + width * 0.8, y + height * 0.4, width * 0.2, height * 0.3);
-
-            // Cockpit
-            ctx.fillStyle = isBoss ? '#faf' : '#f88';
-            ctx.beginPath();
-            ctx.arc(x + width/2, y + height * 0.4, width * 0.15, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Boss-Marker
-            if (isBoss) {
-                ctx.fillStyle = '#ff0';
-                ctx.fillRect(x + width * 0.45, y + height * 0.1, width * 0.1, height * 0.1);
-            }
-        }
-
-        // Realistischer Weltraum-Hintergrund (2K angepasst)
+        // ===== DRAW FUNCTIONS =====
         function drawSpaceBackground() {
-            // Tiefschwarz
             ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, 2560, 1440);
 
-            // Milchstraßen-Band (realistisch)
             const milkyWayGradient = ctx.createLinearGradient(0, 0, 2560, 1440);
             milkyWayGradient.addColorStop(0, 'rgba(30, 30, 50, 0)');
             milkyWayGradient.addColorStop(0.3, 'rgba(50, 50, 80, 0.15)');
@@ -351,28 +482,25 @@
             ctx.fillStyle = milkyWayGradient;
             ctx.fillRect(0, 0, 2560, 1440);
 
-            // Entfernte Sterne (Hintergrund - statisch)
             distantStars.forEach(s => {
                 ctx.fillStyle = `rgba(255, 255, 255, ${s.brightness})`;
                 ctx.fillRect(s.x, s.y, s.size, s.size);
             });
 
-            // Hauptsterne mit Farben und Funkeln
             stars.forEach(s => {
-                // Funkeln-Effekt
-                s.brightness += s.twinkleSpeed;
-                if (s.brightness > 1 || s.brightness < 0.4) {
-                    s.twinkleSpeed = -s.twinkleSpeed;
+                if (!isPaused) {
+                    s.brightness += s.twinkleSpeed;
+                    if (s.brightness > 1 || s.brightness < 0.4) {
+                        s.twinkleSpeed = -s.twinkleSpeed;
+                    }
+
+                    s.y += s.speed;
+                    if (s.y > 1440) {
+                        s.y = 0;
+                        s.x = Math.random() * 2560;
+                    }
                 }
 
-                // Sterne bewegen (Parallax-Effekt)
-                s.y += s.speed;
-                if (s.y > 1440) {
-                    s.y = 0;
-                    s.x = Math.random() * 2560;
-                }
-
-                // Stern-Farbe
                 let r, g, b;
                 if (s.color === 'blue') {
                     r = 150; g = 180; b = 255;
@@ -388,7 +516,6 @@
                 ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Kreuz-Effekt für hellere Sterne
                 if (s.size > 1 && alpha > 0.7) {
                     ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.5})`;
                     ctx.lineWidth = 0.5;
@@ -402,7 +529,58 @@
             });
         }
 
-        // 10 verschiedene Power-Ups zeichnen
+        function drawPlayerShip(x, y, width, height) {
+            ctx.fillStyle = '#0f0';
+            ctx.beginPath();
+            ctx.moveTo(x + width/2, y);
+            ctx.lineTo(x + width, y + height * 0.7);
+            ctx.lineTo(x + width * 0.7, y + height);
+            ctx.lineTo(x + width * 0.3, y + height);
+            ctx.lineTo(x, y + height * 0.7);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#0a0';
+            ctx.fillRect(x, y + height * 0.5, width * 0.2, height * 0.4);
+            ctx.fillRect(x + width * 0.8, y + height * 0.5, width * 0.2, height * 0.4);
+
+            ctx.fillStyle = '#8f8';
+            ctx.beginPath();
+            ctx.arc(x + width/2, y + height * 0.5, width * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#0ff';
+            ctx.fillRect(x + width * 0.35, y + height * 0.95, width * 0.1, height * 0.08);
+            ctx.fillRect(x + width * 0.55, y + height * 0.95, width * 0.1, height * 0.08);
+        }
+
+        function drawEnemyShip(x, y, width, height, isBoss) {
+            const color = isBoss ? '#f0f' : '#f00';
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x + width/2, y + height);
+            ctx.lineTo(x, y + height * 0.3);
+            ctx.lineTo(x + width * 0.3, y);
+            ctx.lineTo(x + width * 0.7, y);
+            ctx.lineTo(x + width, y + height * 0.3);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = isBoss ? '#a0a' : '#a00';
+            ctx.fillRect(x, y + height * 0.4, width * 0.2, height * 0.3);
+            ctx.fillRect(x + width * 0.8, y + height * 0.4, width * 0.2, height * 0.3);
+
+            ctx.fillStyle = isBoss ? '#faf' : '#f88';
+            ctx.beginPath();
+            ctx.arc(x + width/2, y + height * 0.4, width * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (isBoss) {
+                ctx.fillStyle = '#ff0';
+                ctx.fillRect(x + width * 0.45, y + height * 0.1, width * 0.1, height * 0.1);
+            }
+        }
+
         function drawPowerUp(x, y, width, height, type) {
             if (type === 'triple') {
                 ctx.fillStyle = '#fa0';
@@ -497,69 +675,49 @@
             }
         }
 
+        // ===== GAME LOOP =====
         function gameLoop() {
-            // Weltraum-Hintergrund zeichnen
             drawSpaceBackground();
 
-            // Pause-Modus
             if (isPaused) {
-                // Alles nochmal zeichnen (eingefroren)
                 drawPlayerShip(player.x, player.y, player.width, player.height);
 
-                bullets.forEach((b) => {
+                bullets.forEach(b => {
                     ctx.fillStyle = '#ff0';
                     ctx.fillRect(b.x, b.y, b.width, b.height);
                 });
 
-                enemies.forEach((e) => {
+                enemies.forEach(e => {
                     drawEnemyShip(e.x, e.y, e.width, e.height, e.isBoss);
                 });
 
-                powerups.forEach((p) => {
+                powerups.forEach(p => {
                     drawPowerUp(p.x, p.y, p.width, p.height, p.type);
                 });
-
-                // Pause-Overlay (2K angepasst)
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(0, 0, 2560, 1440);
-
-                ctx.fillStyle = '#0f0';
-                ctx.font = 'bold 100px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('PAUSE', 1280, 650);
-
-                ctx.font = '50px Arial';
-                ctx.fillText('Drücke P zum Fortsetzen', 1280, 750);
-
-                ctx.textAlign = 'left';
 
                 requestAnimationFrame(gameLoop);
                 return;
             }
 
-            // Spieler bewegen (2K angepasst)
+            // Player movement
             if (moveLeft && player.x > 0) player.x -= 13;
             if (moveRight && player.x < 2510) player.x += 13;
 
-            // Spieler zeichnen
             drawPlayerShip(player.x, player.y, player.width, player.height);
-            
-            // Schüsse (2K angepasst)
+
+            // Bullets
             bullets.forEach((b, i) => {
                 b.y -= 16;
                 ctx.fillStyle = '#ff0';
                 ctx.fillRect(b.x, b.y, b.width, b.height);
                 if (b.y < 0) bullets.splice(i, 1);
             });
-            
-            // Gegner
+
+            // Enemies
             enemies.forEach((e, i) => {
-                // Normale Gegner: 30% langsamer (3 * 0.7 = 2.1)
-                // Boss Gegner: 50% langsamer (3 * 0.5 = 1.5)
                 e.y += e.isBoss ? 1.5 : 2.1;
                 drawEnemyShip(e.x, e.y, e.width, e.height, e.isBoss);
 
-                // Kollision mit Schuss
                 bullets.forEach((b, bi) => {
                     if (b.x < e.x + e.width && b.x + b.width > e.x &&
                         b.y < e.y + e.height && b.y + b.height > e.y) {
@@ -576,12 +734,11 @@
                 if (e.y > 1440) enemies.splice(i, 1);
             });
 
-            // Power-Ups (2K angepasst)
+            // PowerUps
             powerups.forEach((p, i) => {
                 p.y += 2.7;
                 drawPowerUp(p.x, p.y, p.width, p.height, p.type);
 
-                // Kollision mit Spieler
                 if (player.x < p.x + p.width && player.x + player.width > p.x &&
                     player.y < p.y + p.height && player.y + player.height > p.y) {
 
@@ -596,13 +753,11 @@
                         weaponType = 'laser';
                         setTimeout(() => weaponType = 'normal', 8000);
                     } else if (p.type === 'nuke') {
-                        // Alle Gegner zerstören!
                         score += enemies.length * 15;
                         enemies = [];
                     } else if (p.type === 'speed') {
                         score += 30;
                     } else if (p.type === 'slow') {
-                        // Verlangsamt Gegner (bereits implementiert)
                         score += 40;
                     } else if (p.type === 'magnet') {
                         score += 100;
@@ -619,7 +774,7 @@
                 if (p.y > 1440) powerups.splice(i, 1);
             });
 
-            // Rapid Fire Auto-Shoot
+            // Rapid Fire
             if (rapidFireTimer > 0) {
                 rapidFireTimer--;
                 if (rapidFireTimer % 10 === 0) {
@@ -627,12 +782,11 @@
                 }
             }
 
-            // Score & Status (2K angepasst)
+            // UI
             ctx.fillStyle = '#0f0';
             ctx.font = '50px Arial';
             ctx.fillText('Score: ' + score, 30, 80);
 
-            // Waffen-Status anzeigen
             if (weaponType === 'triple') {
                 ctx.fillStyle = '#fa0';
                 ctx.font = '40px Arial';
@@ -644,10 +798,10 @@
                 ctx.font = '40px Arial';
                 ctx.fillText('⚡ RAPID FIRE', 30, weaponType === 'triple' ? 200 : 140);
             }
-            
+
             requestAnimationFrame(gameLoop);
         }
-        
+
         gameLoop();
     </script>
 </body>
