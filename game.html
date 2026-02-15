@@ -302,7 +302,7 @@
     <div class="start-screen" id="startScreen">
         <div class="start-title">🚀 SPACE SHOOTER 🚀</div>
         <button class="start-button" id="startButton">SPIEL STARTEN</button>
-        <div class="start-info">📱 Halte dein Handy hochkant im Querformat<br>🎮 Kippe links/rechts wie ein Lenkrad<br>🔥 Tippe zum Schießen</div>
+        <div class="start-info">📱 Handy leicht nach vorne geneigt halten<br>🎮 Seiten nach vorne kippen zum Lenken<br>🔥 Tippe zum Schießen</div>
     </div>
 
     <!-- Landscape Warning -->
@@ -552,8 +552,9 @@
             if (window.innerWidth > window.innerHeight) {
                 // Beta verwenden für "Lenkrad"-Bewegung
                 // Beta bei 90° wenn aufrecht
-                // INVERTIERT: Nach hinten neigen (> 90°) = entsprechende Richtung
-                tilt = -(event.beta - 90); // Negativ = invertiert!
+                // Handy nach VORNE geneigt (Oberkante weg von dir)
+                // Beta > 90° = nach vorne geneigt = entsprechende Richtung
+                tilt = event.beta - 90;
 
                 // Debug
                 if (Math.random() < 0.03) {
@@ -561,7 +562,7 @@
                 }
             } else {
                 // Hochformat (sollte nicht passieren wegen Landscape-Lock)
-                tilt = -event.gamma; // Auch invertiert
+                tilt = event.gamma;
             }
 
             // Normalisieren: -30° bis +30° wird zu -1 bis +1
