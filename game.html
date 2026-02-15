@@ -551,8 +551,9 @@
 
             if (window.innerWidth > window.innerHeight) {
                 // Beta verwenden für "Lenkrad"-Bewegung
-                // Beta bei 90° wenn aufrecht, < 90° wenn links kippt, > 90° wenn rechts kippt
-                tilt = event.beta - 90;
+                // Beta bei 90° wenn aufrecht
+                // INVERTIERT: Nach hinten neigen (> 90°) = entsprechende Richtung
+                tilt = -(event.beta - 90); // Negativ = invertiert!
 
                 // Debug
                 if (Math.random() < 0.03) {
@@ -560,7 +561,7 @@
                 }
             } else {
                 // Hochformat (sollte nicht passieren wegen Landscape-Lock)
-                tilt = event.gamma;
+                tilt = -event.gamma; // Auch invertiert
             }
 
             // Normalisieren: -30° bis +30° wird zu -1 bis +1
