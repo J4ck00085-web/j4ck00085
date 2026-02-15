@@ -358,21 +358,47 @@
 
         // ===== GYROSCOPE HANDLING =====
         function handleOrientation(event) {
-            if (!event.beta || !event.gamma) return;
-
-            // Im QUERFORMAT: Beta-Achse für Links/Rechts
-            // Handy liegt FLACH horizontal
-            // Beta-Werte: -90 bis +90
-            // Links kippen = Beta steigt, Rechts kippen = Beta sinkt
+            if (event.beta == null || event.gamma == null) return;
 
             const isLandscape = window.innerWidth > window.innerHeight;
             let tilt = 0;
 
             if (isLandscape) {
-                // QUERFORMAT: Beta nutzen, invertiert
-                // Beta -90 (links gekippt) = nach links
-                // Beta +90 (rechts gekippt) = nach rechts
-                tilt = -event.beta;
+                // QUERFORMAT: Handy FLACH horizontal halten
+                //
+                // DeviceOrientation im Querformat:
+                // - Beta: Oberkante zu dir (-) / von dir weg (+)
+                // - Gamma: Links gekippt (-) / Rechts gekippt (+)
+                //
+                // GEWÜNSCHTES VERHALTEN:
+                // Nach LINKS: Oberkante VON DIR WEG + nach links unten
+                //            ODER nur nach links kippen
+                // Nach RECHTS: Oberkante ZU DIR + über vertikal hinaus
+                //             ODER nur nach rechts kippen
+                //
+                // LÖSUNG: Gamma nutzen, aber basierend auf Beta-Bereich invertieren
+
+                const beta = event.beta;   // -180 bis +180
+                const gamma = event.gamma; // -90 bis +90
+
+                // Wenn Beta positiv (Oberkante von dir weg):
+                //   Gamma negativ = LINKS (korrekt)
+                //   Gamma positiv = RECHTS (korrekt)
+                //
+                // Wenn Beta negativ (Oberkante zu dir / über vertikal):
+                //   Gamma negativ = soll auch LINKS sein, aber ist invertiert
+                //   Gamma positiv = soll auch RECHTS sein, aber ist invertiert
+                //
+                // Also: Wenn Beta im Bereich -180 bis 0, invertiere Gamma
+
+                if (beta < 0) {
+                    // Oberkante zu dir geneigt oder über vertikal hinaus
+                    tilt = -gamma;  // Invertieren
+                } else {
+                    // Oberkante von dir weg oder flach
+                    tilt = gamma;   // Normal
+                }
+
             } else {
                 // HOCHFORMAT: Gamma nutzen
                 tilt = event.gamma;
