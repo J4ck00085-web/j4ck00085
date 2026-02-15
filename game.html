@@ -386,9 +386,8 @@
                 const rollRad = Math.atan2(gamma, beta);
                 const rollDeg = rollRad * (180 / Math.PI);
 
-                // Roll-Winkel anpassen:
-                // -90° bis +90° für Links/Rechts
-                tilt = rollDeg;
+                // Spiegeln: Links funktioniert, also Rechts invertieren
+                tilt = -rollDeg;
 
             } else {
                 // HOCHFORMAT: Gamma nutzen
