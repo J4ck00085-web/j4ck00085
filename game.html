@@ -130,12 +130,12 @@
             position: fixed;
             top: 50%;
             transform: translateY(-50%);
-            width: 100px;
-            height: 200px;
+            width: 40px;
+            height: 80px;
             background: rgba(255, 0, 0, 0.4);
-            border: 3px solid #f00;
-            border-radius: 15px;
-            font-size: 60px;
+            border: 2px solid #f00;
+            border-radius: 10px;
+            font-size: 24px;
             color: #f00;
             pointer-events: all;
             user-select: none;
@@ -148,7 +148,7 @@
 
         .shoot-btn:active {
             background: rgba(255, 0, 0, 0.7);
-            transform: translateY(-50%) scale(0.95);
+            transform: translateY(-50%) scale(0.9);
         }
 
         .shoot-btn-left {
@@ -464,81 +464,104 @@
 
         // Gyroscope aktivieren
         function enableGyroscope() {
+            console.log('enableGyroscope called');
+
+            // iOS 13+ Permission
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // iOS 13+ benötigt Permission
+                console.log('Requesting iOS permission...');
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
+                        console.log('Permission state:', permissionState);
                         if (permissionState === 'granted') {
                             startGyroscope();
+                        } else {
+                            alert('Gyroscope permission denied. Bitte erlaube den Zugriff in den Einstellungen.');
                         }
                     })
-                    .catch(console.error);
-            } else {
-                // Android und ältere iOS-Versionen
+                    .catch(err => {
+                        console.error('Permission error:', err);
+                        alert('Gyroscope-Fehler: ' + err);
+                    });
+            } else if (typeof DeviceOrientationEvent !== 'undefined') {
+                // Android und ältere iOS
+                console.log('Starting gyroscope (no permission needed)');
                 startGyroscope();
+            } else {
+                console.log('DeviceOrientation not supported');
+                alert('Dein Gerät unterstützt kein Gyroscope');
             }
         }
 
         function startGyroscope() {
-            console.log('Gyroscope started');
-            window.addEventListener('deviceorientation', handleOrientation);
+            console.log('Gyroscope started - adding event listener');
+            window.addEventListener('deviceorientation', handleOrientation, true);
             gyroEnabled = true;
 
             // Indicator anzeigen
             gyroIndicator.style.display = 'block';
+            gyroIndicator.textContent = '📱 Gyroscope aktiviert!';
             setTimeout(() => {
                 gyroIndicator.style.display = 'none';
             }, 4000);
-
-            // Debug: Ersten Wert ausgeben
-            setTimeout(() => {
-                console.log('Gyro enabled:', gyroEnabled, 'Tilt:', gyroTilt);
-            }, 1000);
         }
 
         function handleOrientation(event) {
-            if (!event.gamma || !event.beta) return;
+            console.log('Orientation event:', event.beta, event.gamma, event.alpha);
+
+            if (event.gamma === null || event.beta === null) {
+                console.log('No gyro data');
+                return;
+            }
 
             let tilt = 0;
 
-            // Querformat (bevorzugt)
+            // Querformat verwenden
             if (window.innerWidth > window.innerHeight) {
-                // Beta verwenden: Vorne-Hinten wird zu Links-Rechts im Querformat
-                tilt = event.beta;
-
-                // Korrektur: Im Querformat liegt Beta bei ~0 wenn flach
-                // Neigung nach links = negative Beta, rechts = positive Beta
-                if (tilt > 90) tilt = 90 - (tilt - 90); // Umklappen verhindern
-                if (tilt < -90) tilt = -90 - (tilt + 90);
-            } else {
-                // Hochformat (Fallback)
+                // Gamma im Querformat: Neigung links/rechts
                 tilt = event.gamma;
+
+                console.log('Landscape - Gamma:', event.gamma);
+            } else {
+                // Hochformat: Beta verwenden
+                tilt = event.beta - 90;
+                console.log('Portrait - Beta:', event.beta);
             }
 
-            // Normalisieren: -25° bis +25° wird zu -1 bis +1
-            if (tilt < -25) tilt = -25;
-            if (tilt > 25) tilt = 25;
-            gyroTilt = tilt / 25;
+            // Normalisieren: -20° bis +20° wird zu -1 bis +1
+            tilt = Math.max(-20, Math.min(20, tilt));
+            gyroTilt = tilt / 20;
+
+            // Debug nur alle 30 Frames
+            if (Math.random() < 0.03) {
+                console.log('Tilt:', tilt, 'GyroTilt:', gyroTilt);
+            }
         }
 
-        // Bei erstem Touch Gyroscope aktivieren (Mobile)
+        // Gyroscope sofort bei erstem Touch aktivieren
         let gyroActivated = false;
-        function activateGyroOnTouch() {
+        function activateGyro(e) {
             if (!gyroActivated) {
-                console.log('Activating gyroscope...');
+                console.log('Touch detected - activating gyroscope');
+                e.preventDefault();
                 enableGyroscope();
                 gyroActivated = true;
+
+                // Auch Fullscreen versuchen
+                tryEnterFullscreen();
             }
         }
 
-        // Mehrere Events versuchen für bessere Kompatibilität
+        // Auf Mobile-Geräten
         if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-            document.addEventListener('touchstart', activateGyroOnTouch, { once: true });
-            document.addEventListener('click', activateGyroOnTouch, { once: true });
-            // Settings-Button klick soll auch Gyro aktivieren
+            console.log('Mobile detected');
+
+            // Bei jedem Touch versuchen (wichtig für iOS)
+            document.addEventListener('touchstart', activateGyro, { once: true });
+
+            // Auch Shoot-Buttons nutzen
             setTimeout(() => {
-                const settingsBtn = document.getElementById('settingsBtn');
-                settingsBtn.addEventListener('click', activateGyroOnTouch, { once: true });
+                shootBtnLeft.addEventListener('touchstart', activateGyro, { once: true });
+                shootBtnRight.addEventListener('touchstart', activateGyro, { once: true });
             }, 100);
         }
 
@@ -834,13 +857,19 @@
                 return;
             }
 
-            // Player movement
-            if (gyroEnabled) {
+                // Player movement
+            if (gyroEnabled && Math.abs(gyroTilt) > 0.05) {
                 // Gyroscope-Steuerung (Mobile)
-                player.x += gyroTilt * 15; // 15px max speed
+                const speed = gyroTilt * 20; // 20px max speed
+                player.x += speed;
                 if (player.x < 0) player.x = 0;
                 if (player.x > 2510) player.x = 2510;
-            } else {
+
+                // Debug: Position anzeigen
+                if (Math.random() < 0.02) {
+                    console.log('Player X:', player.x, 'Speed:', speed);
+                }
+            } else if (!gyroEnabled) {
                 // Tastatur-Steuerung (Desktop)
                 if (moveLeft && player.x > 0) player.x -= 13;
                 if (moveRight && player.x < 2510) player.x += 13;
@@ -940,6 +969,13 @@
                 ctx.fillStyle = '#0af';
                 ctx.font = '40px Arial';
                 ctx.fillText('⚡ RAPID FIRE', 30, weaponType === 'triple' ? 200 : 140);
+            }
+
+            // Debug: Gyroscope Status anzeigen
+            if (gyroEnabled) {
+                ctx.fillStyle = '#ff0';
+                ctx.font = '30px Arial';
+                ctx.fillText('GYRO: ' + gyroTilt.toFixed(2), 30, weaponType === 'triple' || rapidFireTimer > 0 ? 260 : 140);
             }
 
             requestAnimationFrame(gameLoop);
