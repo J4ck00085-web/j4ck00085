@@ -111,33 +111,29 @@
             display: block;
         }
 
-        /* Mobile Controls */
+        /* Mobile Controls - Gyroscope Mode */
         .mobile-controls {
             position: fixed;
-            bottom: 30px;
+            top: 0;
             left: 0;
             right: 0;
+            bottom: 0;
             display: none;
             z-index: 1000;
             pointer-events: none;
         }
 
-        .direction-pad {
-            position: absolute;
-            left: 30px;
-            bottom: 0;
-            display: flex;
-            gap: 20px;
-        }
-
-        .control-btn {
-            background: rgba(0, 255, 0, 0.4);
-            border: 3px solid #0f0;
-            border-radius: 50%;
+        .shoot-btn {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
             width: 100px;
-            height: 100px;
-            font-size: 50px;
-            color: #0f0;
+            height: 200px;
+            background: rgba(255, 0, 0, 0.4);
+            border: 3px solid #f00;
+            border-radius: 15px;
+            font-size: 60px;
+            color: #f00;
             pointer-events: all;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
@@ -147,25 +143,34 @@
             font-weight: bold;
         }
 
-        .control-btn:active {
-            background: rgba(0, 255, 0, 0.7);
-            transform: scale(0.95);
-        }
-
-        .shoot-btn {
-            position: absolute;
-            right: 30px;
-            bottom: 0;
-            width: 120px;
-            height: 120px;
-            font-size: 60px;
-            background: rgba(255, 0, 0, 0.4);
-            border-color: #f00;
-            color: #f00;
-        }
-
         .shoot-btn:active {
             background: rgba(255, 0, 0, 0.7);
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        .shoot-btn-left {
+            left: 10px;
+        }
+
+        .shoot-btn-right {
+            right: 10px;
+        }
+
+        /* Gyroscope Indicator */
+        .gyro-indicator {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 255, 0, 0.3);
+            border: 2px solid #0f0;
+            border-radius: 10px;
+            padding: 10px 20px;
+            color: #0f0;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            pointer-events: none;
+            display: none;
         }
 
         @media (max-width: 768px), (max-height: 768px) {
@@ -194,14 +199,14 @@
         <div class="settings-option" id="exitBtn">❌ Verlassen</div>
     </div>
 
-    <!-- Mobile Controls -->
-    <div class="mobile-controls">
-        <div class="direction-pad">
-            <button class="control-btn" id="leftBtn">◄</button>
-            <button class="control-btn" id="rightBtn">►</button>
-        </div>
-        <button class="control-btn shoot-btn" id="shootBtn">🔥</button>
+    <!-- Mobile Controls - Gyroscope -->
+    <div class="mobile-controls" id="mobileControls">
+        <button class="shoot-btn shoot-btn-left" id="shootBtnLeft">🔥</button>
+        <button class="shoot-btn shoot-btn-right" id="shootBtnRight">🔥</button>
     </div>
+
+    <!-- Gyroscope Indicator -->
+    <div class="gyro-indicator" id="gyroIndicator">📱 Neige dein Handy zum Steuern</div>
 
     <script>
         // ===== CANVAS SETUP =====
@@ -248,6 +253,8 @@
         // ===== CONTROLS =====
         let moveLeft = false;
         let moveRight = false;
+        let gyroTilt = 0; // -1 (links) bis +1 (rechts)
+        let gyroEnabled = false;
 
         // ===== FULLSCREEN =====
         function enterFullscreen() {
@@ -390,30 +397,70 @@
             if (e.key === 'ArrowRight') moveRight = false;
         });
 
-        // ===== MOBILE TOUCH CONTROLS =====
-        const leftBtn = document.getElementById('leftBtn');
-        const rightBtn = document.getElementById('rightBtn');
-        const shootBtn = document.getElementById('shootBtn');
+        // ===== GYROSCOPE/ACCELEROMETER CONTROLS =====
+        const mobileControls = document.getElementById('mobileControls');
+        const gyroIndicator = document.getElementById('gyroIndicator');
+        const shootBtnLeft = document.getElementById('shootBtnLeft');
+        const shootBtnRight = document.getElementById('shootBtnRight');
 
-        leftBtn.addEventListener('touchstart', (e) => {
+        // Gyroscope aktivieren
+        function enableGyroscope() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // iOS 13+ benötigt Permission
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            startGyroscope();
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Android und ältere iOS-Versionen
+                startGyroscope();
+            }
+        }
+
+        function startGyroscope() {
+            window.addEventListener('deviceorientation', handleOrientation);
+            gyroEnabled = true;
+            gyroIndicator.style.display = 'block';
+            setTimeout(() => {
+                gyroIndicator.style.display = 'none';
+            }, 3000);
+        }
+
+        function handleOrientation(event) {
+            // Gamma: Links-Rechts-Neigung (-90 bis 90)
+            let gamma = event.gamma;
+
+            // Querformat-Unterstützung
+            if (window.innerWidth > window.innerHeight) {
+                // Im Querformat Beta verwenden
+                gamma = event.beta - 90; // Beta umrechnen
+            }
+
+            // Normalisieren: -30° bis +30° wird zu -1 bis +1
+            if (gamma < -30) gamma = -30;
+            if (gamma > 30) gamma = 30;
+            gyroTilt = gamma / 30;
+        }
+
+        // Bei erstem Touch Gyroscope aktivieren (Mobile)
+        let gyroActivated = false;
+        document.addEventListener('touchstart', () => {
+            if (!gyroActivated && /Mobi|Android/i.test(navigator.userAgent)) {
+                enableGyroscope();
+                gyroActivated = true;
+            }
+        }, { once: true });
+
+        // ===== MOBILE SHOOT BUTTONS =====
+        shootBtnLeft.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            moveLeft = true;
-        });
-        leftBtn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            moveLeft = false;
+            shoot();
         });
 
-        rightBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            moveRight = true;
-        });
-        rightBtn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            moveRight = false;
-        });
-
-        shootBtn.addEventListener('touchstart', (e) => {
+        shootBtnRight.addEventListener('touchstart', (e) => {
             e.preventDefault();
             shoot();
         });
@@ -700,8 +747,16 @@
             }
 
             // Player movement
-            if (moveLeft && player.x > 0) player.x -= 13;
-            if (moveRight && player.x < 2510) player.x += 13;
+            if (gyroEnabled) {
+                // Gyroscope-Steuerung (Mobile)
+                player.x += gyroTilt * 15; // 15px max speed
+                if (player.x < 0) player.x = 0;
+                if (player.x > 2510) player.x = 2510;
+            } else {
+                // Tastatur-Steuerung (Desktop)
+                if (moveLeft && player.x > 0) player.x -= 13;
+                if (moveRight && player.x < 2510) player.x += 13;
+            }
 
             drawPlayerShip(player.x, player.y, player.width, player.height);
 
