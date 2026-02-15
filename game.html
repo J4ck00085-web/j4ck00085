@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Space Shooter 2K</title>
+    <title>*-*SterMoe*-*</title>
     <style>
         * {
             margin: 0;
@@ -28,6 +28,8 @@
             position: fixed;
             top: 0;
             left: 0;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
         }
 
         html {
@@ -43,6 +45,18 @@
             object-fit: contain;
             background: transparent;
             touch-action: none;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+
+        /* Schärferer Hintergrund */
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: inherit;
+            filter: contrast(1.2) brightness(1.1) saturate(1.3);
+            z-index: -1;
         }
 
         /* ===== SETTINGS BUTTON ===== */
@@ -280,7 +294,7 @@
 
     <!-- Start Screen -->
     <div class="start-screen" id="startScreen">
-        <div class="start-title">🚀 SPACE SHOOTER 🚀</div>
+        <div class="start-title">🚀 *-*SterMoe*-* 🚀</div>
         <button class="start-button" id="startButton">SPIEL STARTEN</button>
         <div class="start-info">📱 Halte dein Handy FLACH im Querformat<br>🎮 Kippe Links/Rechts zum Lenken<br>🔥 Tippe zum Schießen</div>
     </div>
@@ -299,10 +313,11 @@
         const H = 1440;
 
         // ===== GAME STATE =====
-        // PC: Schiff 15% größer (50 * 1.15 = 57.5, 40 * 1.15 = 46)
+        // PC: Schiff 15% + 70% größer = 1.15 * 1.7 = 1.955x
+        // 50 * 1.955 = 97.75, 40 * 1.955 = 78.2
         const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-        const playerWidth = isMobile ? 50 : 57.5;
-        const playerHeight = isMobile ? 40 : 46;
+        const playerWidth = isMobile ? 50 : 97.75;
+        const playerHeight = isMobile ? 40 : 78.2;
 
         let player = { x: 1230, y: 1340, width: playerWidth, height: playerHeight };
         let bullets = [];
@@ -320,6 +335,15 @@
         let moveRight = false;
         let gyroTilt = 0;
         let gyroEnabled = false;
+
+        // ===== SHIP IMAGE =====
+        const shipImage = new Image();
+        shipImage.src = 'ship.png';
+        let shipImageLoaded = false;
+        shipImage.onload = () => {
+            shipImageLoaded = true;
+            console.log('✅ Schiff-Bild geladen');
+        };
 
         // ===== BACKGROUND STARS =====
         const distantStars = Array.from({ length: 400 }, () => ({
@@ -606,45 +630,44 @@
         }
 
         function drawPlayerShip(x, y, w, h) {
-            // Hauptkörper
-            ctx.fillStyle = '#0f0';
-            ctx.beginPath();
-            ctx.moveTo(x + w/2, y);
-            ctx.lineTo(x + w, y + h * 0.7);
-            ctx.lineTo(x + w * 0.7, y + h);
-            ctx.lineTo(x + w * 0.3, y + h);
-            ctx.lineTo(x, y + h * 0.7);
-            ctx.closePath();
-            ctx.fill();
+            if (shipImageLoaded) {
+                // Raumschiff-Bild zeichnen
+                ctx.save();
 
-            // Flügel
-            ctx.fillStyle = '#0a0';
-            ctx.fillRect(x, y + h * 0.5, w * 0.2, h * 0.4);
-            ctx.fillRect(x + w * 0.8, y + h * 0.5, w * 0.2, h * 0.4);
+                // Schärferes Rendering
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
 
-            // Cockpit
-            ctx.fillStyle = '#8f8';
-            ctx.beginPath();
-            ctx.arc(x + w/2, y + h * 0.5, w * 0.15, 0, Math.PI * 2);
-            ctx.fill();
+                // Bild zentriert zeichnen
+                ctx.drawImage(shipImage, x - w * 0.1, y - h * 0.1, w * 1.2, h * 1.2);
 
-            // Triebwerke
-            ctx.fillStyle = '#0ff';
-            ctx.fillRect(x + w * 0.35, y + h * 0.95, w * 0.1, h * 0.08);
-            ctx.fillRect(x + w * 0.55, y + h * 0.95, w * 0.1, h * 0.08);
+                ctx.restore();
 
-            // DOPPELKANONE vorne am Schiff
-            ctx.fillStyle = '#0f0';
-            // Linke Kanone
-            ctx.fillRect(x + w * 0.3, y - h * 0.3, w * 0.08, h * 0.35);
-            ctx.fillStyle = '#ff0';
-            ctx.fillRect(x + w * 0.3, y - h * 0.32, w * 0.08, h * 0.1);
+                // Glühen-Effekt für Triebwerke
+                ctx.save();
+                ctx.shadowColor = '#0ff';
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
+                ctx.fillRect(x + w * 0.35, y + h * 0.95, w * 0.1, h * 0.08);
+                ctx.fillRect(x + w * 0.55, y + h * 0.95, w * 0.1, h * 0.08);
+                ctx.restore();
+            } else {
+                // Fallback: Original-Design wenn Bild noch nicht geladen
+                ctx.fillStyle = '#0f0';
+                ctx.beginPath();
+                ctx.moveTo(x + w/2, y);
+                ctx.lineTo(x + w, y + h * 0.7);
+                ctx.lineTo(x + w * 0.7, y + h);
+                ctx.lineTo(x + w * 0.3, y + h);
+                ctx.lineTo(x, y + h * 0.7);
+                ctx.closePath();
+                ctx.fill();
 
-            // Rechte Kanone
-            ctx.fillStyle = '#0f0';
-            ctx.fillRect(x + w * 0.62, y - h * 0.3, w * 0.08, h * 0.35);
-            ctx.fillStyle = '#ff0';
-            ctx.fillRect(x + w * 0.62, y - h * 0.32, w * 0.08, h * 0.1);
+                // Triebwerke
+                ctx.fillStyle = '#0ff';
+                ctx.fillRect(x + w * 0.35, y + h * 0.95, w * 0.1, h * 0.08);
+                ctx.fillRect(x + w * 0.55, y + h * 0.95, w * 0.1, h * 0.08);
+            }
         }
 
         function drawEnemyShip(x, y, w, h, isBoss) {
