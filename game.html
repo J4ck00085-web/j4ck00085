@@ -358,26 +358,37 @@
 
         // ===== GYROSCOPE HANDLING =====
         function handleOrientation(event) {
-            if (event.gamma == null) return;
+            if (event.beta == null || event.gamma == null) return;
 
             const isLandscape = window.innerWidth > window.innerHeight;
             let tilt = 0;
 
             if (isLandscape) {
-                // QUERFORMAT: NUR Links/Rechts-Rotation (Gamma-Achse)
+                // QUERFORMAT: Links/Rechts-Kippen unabhängig von Vor/Zurück-Neigung
                 //
-                // Basierend auf dem Bild:
-                // - Handy im Querformat (Display nach oben)
-                // - Links kippen (Handy oben nach links) = nach LINKS lenken
-                // - Rechts kippen (Handy oben nach rechts) = nach RECHTS lenken
-                // - Vor/Zurück-Neigung (Beta) wird IGNORIERT
+                // PROBLEM:
+                // Wenn Beta sich ändert (Handy vor/zurück neigen), ändert sich
+                // auch was Gamma bedeutet! Das Koordinatensystem rotiert mit!
                 //
-                // LÖSUNG: Einfach Gamma nutzen!
-                // Gamma im Querformat:
-                //   Negativ (-) = Links gekippt → nach LINKS
-                //   Positiv (+) = Rechts gekippt → nach RECHTS
+                // LÖSUNG:
+                // Wir müssen die echte "Roll"-Rotation berechnen, unabhängig
+                // von der "Pitch"-Rotation (Beta).
+                //
+                // FORMEL für Roll im Querformat:
+                // roll = atan2(gamma, beta) - gibt uns die Links/Rechts-Neigung
+                // unabhängig von der Vor/Zurück-Neigung
 
-                tilt = event.gamma;
+                const beta = event.beta;
+                const gamma = event.gamma;
+
+                // Berechne Roll-Winkel (Links/Rechts-Rotation um die Längsachse)
+                // atan2 gibt Winkel in Radians, umrechnen in Grad
+                const rollRad = Math.atan2(gamma, beta);
+                const rollDeg = rollRad * (180 / Math.PI);
+
+                // Roll-Winkel anpassen:
+                // -90° bis +90° für Links/Rechts
+                tilt = rollDeg;
 
             } else {
                 // HOCHFORMAT: Gamma nutzen
