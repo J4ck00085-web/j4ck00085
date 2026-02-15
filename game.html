@@ -383,11 +383,11 @@
 
                 // Berechne Roll-Winkel (Links/Rechts-Rotation um die Längsachse)
                 // atan2 gibt Winkel in Radians, umrechnen in Grad
-                const rollRad = Math.atan2(gamma, beta);
+                const rollRad = Math.atan2(beta, gamma);
                 const rollDeg = rollRad * (180 / Math.PI);
 
-                // Spiegeln: Links funktioniert, also Rechts invertieren
-                tilt = -rollDeg;
+                // Direkt nutzen ohne Invertierung
+                tilt = rollDeg;
 
             } else {
                 // HOCHFORMAT: Gamma nutzen
