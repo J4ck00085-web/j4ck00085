@@ -302,7 +302,7 @@
     <div class="start-screen" id="startScreen">
         <div class="start-title">🚀 SPACE SHOOTER 🚀</div>
         <button class="start-button" id="startButton">SPIEL STARTEN</button>
-        <div class="start-info">📱 Neige dein Handy zum Steuern<br>🔥 Tippe zum Schießen</div>
+        <div class="start-info">📱 Halte dein Handy hochkant im Querformat<br>🎮 Kippe links/rechts wie ein Lenkrad<br>🔥 Tippe zum Schießen</div>
     </div>
 
     <!-- Landscape Warning -->
@@ -537,8 +537,6 @@
         }
 
         function handleOrientation(event) {
-            console.log('Orientation event:', event.beta, event.gamma, event.alpha);
-
             if (event.gamma === null || event.beta === null) {
                 console.log('No gyro data');
                 return;
@@ -546,25 +544,32 @@
 
             let tilt = 0;
 
-            // Querformat verwenden
-            if (window.innerWidth > window.innerHeight) {
-                // Gamma im Querformat: Neigung links/rechts
-                tilt = event.gamma;
+            // Querformat - Handy wird HOCHKANT gehalten (wie ein Lenkrad)
+            // Beta-Achse: Vorne-Hinten Neigung
+            // Wenn Lautstärke-Tasten-Seite (links) nach unten = negativ = links
+            // Wenn SIM-Karten-Seite (rechts) nach unten = positiv = rechts
 
-                console.log('Landscape - Gamma:', event.gamma);
-            } else {
-                // Hochformat: Beta verwenden
+            if (window.innerWidth > window.innerHeight) {
+                // Beta verwenden für "Lenkrad"-Bewegung
+                // Beta bei 90° wenn aufrecht, < 90° wenn links kippt, > 90° wenn rechts kippt
                 tilt = event.beta - 90;
-                console.log('Portrait - Beta:', event.beta);
+
+                // Debug
+                if (Math.random() < 0.03) {
+                    console.log('Beta:', event.beta, 'Tilt:', tilt);
+                }
+            } else {
+                // Hochformat (sollte nicht passieren wegen Landscape-Lock)
+                tilt = event.gamma;
             }
 
-            // Normalisieren: -20° bis +20° wird zu -1 bis +1
-            tilt = Math.max(-20, Math.min(20, tilt));
-            gyroTilt = tilt / 20;
+            // Normalisieren: -30° bis +30° wird zu -1 bis +1
+            tilt = Math.max(-30, Math.min(30, tilt));
+            gyroTilt = tilt / 30;
 
-            // Debug nur alle 30 Frames
-            if (Math.random() < 0.03) {
-                console.log('Tilt:', tilt, 'GyroTilt:', gyroTilt);
+            // Debug nur gelegentlich
+            if (Math.random() < 0.02) {
+                console.log('Final Tilt:', tilt, 'GyroTilt:', gyroTilt);
             }
         }
 
