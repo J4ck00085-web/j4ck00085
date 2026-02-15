@@ -632,105 +632,108 @@
         function drawPlayerShip(x, y, w, h) {
             ctx.save();
 
-            // HAUPTKÖRPER - Helles Grau/Weiß
-            ctx.fillStyle = '#e8e8e8';
-            ctx.fillRect(x + w * 0.35, y, w * 0.3, h * 0.8);
+            // === HAUPTKÖRPER === Sleek, spitz, hell
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+            ctx.shadowBlur = 10;
 
-            // FLÜGEL - Breite Flügel links/rechts
-            ctx.fillStyle = '#d0d0d0';
+            // Zentraler Körper - spitze Nase
             ctx.beginPath();
-            ctx.moveTo(x, y + h * 0.3);
-            ctx.lineTo(x + w * 0.35, y + h * 0.2);
-            ctx.lineTo(x + w * 0.35, y + h * 0.6);
-            ctx.lineTo(x, y + h * 0.7);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.moveTo(x + w, y + h * 0.3);
-            ctx.lineTo(x + w * 0.65, y + h * 0.2);
+            ctx.moveTo(x + w * 0.5, y);  // Spitze vorne
             ctx.lineTo(x + w * 0.65, y + h * 0.6);
-            ctx.lineTo(x + w, y + h * 0.7);
+            ctx.lineTo(x + w * 0.35, y + h * 0.6);
             ctx.closePath();
             ctx.fill();
 
-            // COCKPIT - Vorne spitz, hell
-            ctx.fillStyle = '#f5f5f5';
+            // Unterer Körper
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(x + w * 0.4, y + h * 0.5, w * 0.2, h * 0.4);
+
+            // === FLÜGEL === Große aerodynamische Flügel
+            ctx.fillStyle = '#e0e0e0';
+
+            // Linker Flügel
             ctx.beginPath();
-            ctx.moveTo(x + w * 0.5, y - h * 0.1);
-            ctx.lineTo(x + w * 0.35, y + h * 0.3);
-            ctx.lineTo(x + w * 0.65, y + h * 0.3);
+            ctx.moveTo(x, y + h * 0.4);
+            ctx.lineTo(x + w * 0.4, y + h * 0.3);
+            ctx.lineTo(x + w * 0.4, y + h * 0.8);
+            ctx.lineTo(x + w * 0.05, y + h * 0.85);
             ctx.closePath();
             ctx.fill();
 
-            // SEITLICHE TRIEBWERKE - Große runde Triebwerke
-            ctx.fillStyle = '#b0b0b0';
+            // Rechter Flügel
             ctx.beginPath();
-            ctx.ellipse(x + w * 0.15, y + h * 0.5, w * 0.12, h * 0.15, 0, 0, Math.PI * 2);
+            ctx.moveTo(x + w, y + h * 0.4);
+            ctx.lineTo(x + w * 0.6, y + h * 0.3);
+            ctx.lineTo(x + w * 0.6, y + h * 0.8);
+            ctx.lineTo(x + w * 0.95, y + h * 0.85);
+            ctx.closePath();
             ctx.fill();
 
-            ctx.beginPath();
-            ctx.ellipse(x + w * 0.85, y + h * 0.5, w * 0.12, h * 0.15, 0, 0, Math.PI * 2);
-            ctx.fill();
+            // === COCKPIT === Glasiertes Cockpit vorne
+            ctx.fillStyle = 'rgba(0, 200, 255, 0.4)';
+            ctx.fillRect(x + w * 0.43, y + h * 0.15, w * 0.14, h * 0.25);
 
-            // ZENTRALE TRIEBWERKE - Hinten am Körper
-            ctx.fillStyle = '#a0a0a0';
-            ctx.fillRect(x + w * 0.38, y + h * 0.75, w * 0.08, h * 0.15);
-            ctx.fillRect(x + w * 0.54, y + h * 0.75, w * 0.08, h * 0.15);
-
-            // BLAUE AKZENTE - Cyan Lichter an den Seiten
-            ctx.fillStyle = '#0ff';
-            ctx.fillRect(x + w * 0.05, y + h * 0.4, w * 0.04, h * 0.08);
-            ctx.fillRect(x + w * 0.91, y + h * 0.4, w * 0.04, h * 0.08);
-
-            // DETAILLINIEN - Dunkle Linien für Details
-            ctx.strokeStyle = '#666';
+            // Cockpit-Rahmen
+            ctx.strokeStyle = '#fff';
             ctx.lineWidth = 2;
-            ctx.strokeRect(x + w * 0.35, y, w * 0.3, h * 0.8);
+            ctx.strokeRect(x + w * 0.43, y + h * 0.15, w * 0.14, h * 0.25);
 
-            // GLÜHENDE TRIEBWERKE - Orange/Cyan Flammen
-            ctx.save();
+            // === TRIEBWERKE === Große Engine-Pods
+            ctx.shadowBlur = 0;
+
+            // Linkes Triebwerk Pod
+            ctx.fillStyle = '#d0d0d0';
+            ctx.fillRect(x + w * 0.05, y + h * 0.6, w * 0.15, h * 0.35);
+
+            // Rechtes Triebwerk Pod
+            ctx.fillRect(x + w * 0.8, y + h * 0.6, w * 0.15, h * 0.35);
+
+            // === GLÜHENDE TRIEBWERKE === Orange Flammen
             ctx.shadowColor = '#ff6600';
-            ctx.shadowBlur = 20;
+            ctx.shadowBlur = 25;
 
-            // Linkes Triebwerk
-            ctx.fillStyle = 'rgba(255, 120, 0, 0.9)';
-            ctx.beginPath();
-            ctx.ellipse(x + w * 0.15, y + h * 0.92, w * 0.08, h * 0.12, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(255, 200, 0, 0.7)';
-            ctx.beginPath();
-            ctx.ellipse(x + w * 0.15, y + h * 0.92, w * 0.05, h * 0.08, 0, 0, Math.PI * 2);
-            ctx.fill();
+            const gradient1 = ctx.createRadialGradient(
+                x + w * 0.125, y + h * 0.98, 0,
+                x + w * 0.125, y + h * 0.98, w * 0.1
+            );
+            gradient1.addColorStop(0, 'rgba(255, 255, 200, 1)');
+            gradient1.addColorStop(0.4, 'rgba(255, 150, 0, 0.9)');
+            gradient1.addColorStop(1, 'rgba(255, 100, 0, 0)');
 
-            // Rechtes Triebwerk
-            ctx.fillStyle = 'rgba(255, 120, 0, 0.9)';
-            ctx.beginPath();
-            ctx.ellipse(x + w * 0.85, y + h * 0.92, w * 0.08, h * 0.12, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(255, 200, 0, 0.7)';
-            ctx.beginPath();
-            ctx.ellipse(x + w * 0.85, y + h * 0.92, w * 0.05, h * 0.08, 0, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillStyle = gradient1;
+            ctx.fillRect(x + w * 0.05, y + h * 0.95, w * 0.15, h * 0.15);
 
-            // Zentrale Triebwerke - Cyan
+            const gradient2 = ctx.createRadialGradient(
+                x + w * 0.875, y + h * 0.98, 0,
+                x + w * 0.875, y + h * 0.98, w * 0.1
+            );
+            gradient2.addColorStop(0, 'rgba(255, 255, 200, 1)');
+            gradient2.addColorStop(0.4, 'rgba(255, 150, 0, 0.9)');
+            gradient2.addColorStop(1, 'rgba(255, 100, 0, 0)');
+
+            ctx.fillStyle = gradient2;
+            ctx.fillRect(x + w * 0.8, y + h * 0.95, w * 0.15, h * 0.15);
+
+            // === CYAN AKZENTE === Leuchtende Details
             ctx.shadowColor = '#0ff';
-            ctx.shadowBlur = 15;
-            ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
-            ctx.fillRect(x + w * 0.38, y + h * 0.90, w * 0.08, h * 0.12);
-            ctx.fillRect(x + w * 0.54, y + h * 0.90, w * 0.08, h * 0.12);
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = '#0ff';
 
-            ctx.restore();
+            // Linien an Flügeln
+            ctx.fillRect(x + w * 0.08, y + h * 0.65, w * 0.08, h * 0.03);
+            ctx.fillRect(x + w * 0.84, y + h * 0.65, w * 0.08, h * 0.03);
 
-            // WAFFENSYSTEM - Kanonen vorne
-            ctx.fillStyle = '#c0c0c0';
-            ctx.fillRect(x + w * 0.25, y + h * 0.1, w * 0.05, h * 0.3);
-            ctx.fillRect(x + w * 0.70, y + h * 0.1, w * 0.05, h * 0.3);
+            // === WAFFEN === Laser-Kanonen
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#aaa';
+            ctx.fillRect(x + w * 0.32, y + h * 0.2, w * 0.04, h * 0.35);
+            ctx.fillRect(x + w * 0.64, y + h * 0.2, w * 0.04, h * 0.35);
 
-            // Mündungen
-            ctx.fillStyle = '#333';
-            ctx.fillRect(x + w * 0.25, y + h * 0.1, w * 0.05, h * 0.08);
-            ctx.fillRect(x + w * 0.70, y + h * 0.1, w * 0.05, h * 0.08);
+            // Laser-Mündungen rot
+            ctx.fillStyle = '#f00';
+            ctx.fillRect(x + w * 0.32, y + h * 0.2, w * 0.04, h * 0.05);
+            ctx.fillRect(x + w * 0.64, y + h * 0.2, w * 0.04, h * 0.05);
 
             ctx.restore();
         }
