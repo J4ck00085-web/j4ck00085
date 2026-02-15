@@ -364,39 +364,29 @@
             let tilt = 0;
 
             if (isLandscape) {
-                // QUERFORMAT: Handy FLACH horizontal halten
-                //
-                // DeviceOrientation im Querformat:
-                // - Beta: Oberkante zu dir (-) / von dir weg (+)
-                // - Gamma: Links gekippt (-) / Rechts gekippt (+)
+                // QUERFORMAT: NUR Links/Rechts-Neigung, Vor/Zurück ignorieren
                 //
                 // GEWÜNSCHTES VERHALTEN:
-                // Nach LINKS: Oberkante VON DIR WEG + nach links unten
-                //            ODER nur nach links kippen
-                // Nach RECHTS: Oberkante ZU DIR + über vertikal hinaus
-                //             ODER nur nach rechts kippen
+                // - Links kippen = IMMER nach links (egal ob Handy zu dir oder weg)
+                // - Rechts kippen = IMMER nach rechts (egal ob Handy zu dir oder weg)
                 //
-                // LÖSUNG: Gamma nutzen, aber basierend auf Beta-Bereich invertieren
+                // PROBLEM: Gamma invertiert sich wenn Beta negativ wird
+                // LÖSUNG: Beta-Bereich prüfen und Gamma entsprechend anpassen
 
-                const beta = event.beta;   // -180 bis +180
-                const gamma = event.gamma; // -90 bis +90
+                let beta = event.beta;
+                let gamma = event.gamma;
 
-                // Wenn Beta positiv (Oberkante von dir weg):
-                //   Gamma negativ = LINKS (korrekt)
-                //   Gamma positiv = RECHTS (korrekt)
-                //
-                // Wenn Beta negativ (Oberkante zu dir / über vertikal):
-                //   Gamma negativ = soll auch LINKS sein, aber ist invertiert
-                //   Gamma positiv = soll auch RECHTS sein, aber ist invertiert
-                //
-                // Also: Wenn Beta im Bereich -180 bis 0, invertiere Gamma
+                // Beta normalisieren auf -180 bis +180
+                // Wenn Handy über vertikal gekippt ist (zu dir), ist Beta im Bereich 90-180 oder -90 bis -180
 
-                if (beta < 0) {
-                    // Oberkante zu dir geneigt oder über vertikal hinaus
-                    tilt = -gamma;  // Invertieren
+                // Prüfe ob Handy "umgedreht" ist (Display nach unten oder stark zu dir geneigt)
+                if (Math.abs(beta) > 90) {
+                    // Handy ist über 90° gekippt (zu dir oder Display nach unten)
+                    // In diesem Fall muss Gamma invertiert werden
+                    tilt = -gamma;
                 } else {
-                    // Oberkante von dir weg oder flach
-                    tilt = gamma;   // Normal
+                    // Handy ist normal (flach oder von dir weg geneigt)
+                    tilt = gamma;
                 }
 
             } else {
