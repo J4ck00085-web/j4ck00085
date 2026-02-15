@@ -1,0 +1,9 @@
+# Am Ende deiner .prompt.yml
+evaluators:
+  - name: "Korrektes Format"
+    string: { startsWith: "Zusammenfassung:" }
+  - name: "Inhaltliche Ähnlichkeit"
+    type: similarity
+  - name: "Eigener Qualitätscheck"
+    type: custom
+    prompt: "Bewertet die Antwort auf einer Skala von 1-5 basierend auf der Klarheit."
