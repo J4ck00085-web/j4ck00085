@@ -302,7 +302,7 @@
     <div class="start-screen" id="startScreen">
         <div class="start-title">🚀 SPACE SHOOTER 🚀</div>
         <button class="start-button" id="startButton">SPIEL STARTEN</button>
-        <div class="start-info">📱 Handy leicht nach vorne geneigt halten<br>🎮 Seiten nach vorne kippen zum Lenken<br>🔥 Tippe zum Schießen</div>
+        <div class="start-info">📱 Handy nach vorne geneigt halten (Oberkante weg)<br>🎮 Links/Rechts schwenken zum Lenken<br>🔥 Tippe zum Schießen</div>
     </div>
 
     <!-- Landscape Warning -->
@@ -550,19 +550,18 @@
             // Wenn SIM-Karten-Seite (rechts) nach unten = positiv = rechts
 
             if (window.innerWidth > window.innerHeight) {
-                // Beta verwenden für "Lenkrad"-Bewegung
-                // Beta bei 90° wenn aufrecht
-                // Handy nach VORNE geneigt (Oberkante weg von dir)
-                // Beta > 90° = nach vorne geneigt = entsprechende Richtung
-                tilt = event.beta - 90;
+                // GAMMA verwenden für Links-Rechts Schwenken
+                // Handy nach VORNE geneigt halten (Oberkante weg von dir)
+                // Dann LINKS/RECHTS schwenken (Gamma-Achse)
+                tilt = event.gamma;
 
                 // Debug
                 if (Math.random() < 0.03) {
-                    console.log('Beta:', event.beta, 'Tilt:', tilt);
+                    console.log('Gamma:', event.gamma, 'Tilt:', tilt);
                 }
             } else {
                 // Hochformat (sollte nicht passieren wegen Landscape-Lock)
-                tilt = event.gamma;
+                tilt = event.beta;
             }
 
             // Normalisieren: -30° bis +30° wird zu -1 bis +1
