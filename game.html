@@ -323,6 +323,7 @@
         let bullets = [];
         let enemies = [];
         let powerups = [];
+        let explosions = [];
         let score = 0;
         let weaponType = 'normal';
         let rapidFireTimer = 0;
@@ -632,140 +633,171 @@
         function drawPlayerShip(x, y, w, h) {
             ctx.save();
 
-            // === HAUPTKÖRPER === Sleek, spitz, hell
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-            ctx.shadowBlur = 10;
+            // Einfaches grünes Dreieck - Player
+            ctx.fillStyle = '#0f0';
+            ctx.shadowColor = 'rgba(0, 255, 0, 0.6)';
+            ctx.shadowBlur = 15;
 
-            // Zentraler Körper - spitze Nase
             ctx.beginPath();
-            ctx.moveTo(x + w * 0.5, y);  // Spitze vorne
-            ctx.lineTo(x + w * 0.65, y + h * 0.6);
-            ctx.lineTo(x + w * 0.35, y + h * 0.6);
+            ctx.moveTo(x + w/2, y);
+            ctx.lineTo(x + w, y + h * 0.8);
+            ctx.lineTo(x + w * 0.6, y + h);
+            ctx.lineTo(x + w * 0.4, y + h);
+            ctx.lineTo(x, y + h * 0.8);
             ctx.closePath();
             ctx.fill();
 
-            // Unterer Körper
-            ctx.fillStyle = '#f0f0f0';
-            ctx.fillRect(x + w * 0.4, y + h * 0.5, w * 0.2, h * 0.4);
-
-            // === FLÜGEL === Große aerodynamische Flügel
-            ctx.fillStyle = '#e0e0e0';
-
-            // Linker Flügel
+            // Cockpit
+            ctx.fillStyle = '#8f8';
+            ctx.shadowBlur = 5;
             ctx.beginPath();
-            ctx.moveTo(x, y + h * 0.4);
-            ctx.lineTo(x + w * 0.4, y + h * 0.3);
-            ctx.lineTo(x + w * 0.4, y + h * 0.8);
-            ctx.lineTo(x + w * 0.05, y + h * 0.85);
-            ctx.closePath();
+            ctx.arc(x + w/2, y + h * 0.4, w * 0.15, 0, Math.PI * 2);
             ctx.fill();
 
-            // Rechter Flügel
-            ctx.beginPath();
-            ctx.moveTo(x + w, y + h * 0.4);
-            ctx.lineTo(x + w * 0.6, y + h * 0.3);
-            ctx.lineTo(x + w * 0.6, y + h * 0.8);
-            ctx.lineTo(x + w * 0.95, y + h * 0.85);
-            ctx.closePath();
-            ctx.fill();
-
-            // === COCKPIT === Glasiertes Cockpit vorne
-            ctx.fillStyle = 'rgba(0, 200, 255, 0.4)';
-            ctx.fillRect(x + w * 0.43, y + h * 0.15, w * 0.14, h * 0.25);
-
-            // Cockpit-Rahmen
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x + w * 0.43, y + h * 0.15, w * 0.14, h * 0.25);
-
-            // === TRIEBWERKE === Große Engine-Pods
-            ctx.shadowBlur = 0;
-
-            // Linkes Triebwerk Pod
-            ctx.fillStyle = '#d0d0d0';
-            ctx.fillRect(x + w * 0.05, y + h * 0.6, w * 0.15, h * 0.35);
-
-            // Rechtes Triebwerk Pod
-            ctx.fillRect(x + w * 0.8, y + h * 0.6, w * 0.15, h * 0.35);
-
-            // === GLÜHENDE TRIEBWERKE === Orange Flammen
-            ctx.shadowColor = '#ff6600';
-            ctx.shadowBlur = 25;
-
-            const gradient1 = ctx.createRadialGradient(
-                x + w * 0.125, y + h * 0.98, 0,
-                x + w * 0.125, y + h * 0.98, w * 0.1
-            );
-            gradient1.addColorStop(0, 'rgba(255, 255, 200, 1)');
-            gradient1.addColorStop(0.4, 'rgba(255, 150, 0, 0.9)');
-            gradient1.addColorStop(1, 'rgba(255, 100, 0, 0)');
-
-            ctx.fillStyle = gradient1;
-            ctx.fillRect(x + w * 0.05, y + h * 0.95, w * 0.15, h * 0.15);
-
-            const gradient2 = ctx.createRadialGradient(
-                x + w * 0.875, y + h * 0.98, 0,
-                x + w * 0.875, y + h * 0.98, w * 0.1
-            );
-            gradient2.addColorStop(0, 'rgba(255, 255, 200, 1)');
-            gradient2.addColorStop(0.4, 'rgba(255, 150, 0, 0.9)');
-            gradient2.addColorStop(1, 'rgba(255, 100, 0, 0)');
-
-            ctx.fillStyle = gradient2;
-            ctx.fillRect(x + w * 0.8, y + h * 0.95, w * 0.15, h * 0.15);
-
-            // === CYAN AKZENTE === Leuchtende Details
+            // Triebwerke
             ctx.shadowColor = '#0ff';
-            ctx.shadowBlur = 10;
-            ctx.fillStyle = '#0ff';
-
-            // Linien an Flügeln
-            ctx.fillRect(x + w * 0.08, y + h * 0.65, w * 0.08, h * 0.03);
-            ctx.fillRect(x + w * 0.84, y + h * 0.65, w * 0.08, h * 0.03);
-
-            // === WAFFEN === Laser-Kanonen
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = '#aaa';
-            ctx.fillRect(x + w * 0.32, y + h * 0.2, w * 0.04, h * 0.35);
-            ctx.fillRect(x + w * 0.64, y + h * 0.2, w * 0.04, h * 0.35);
-
-            // Laser-Mündungen rot
-            ctx.fillStyle = '#f00';
-            ctx.fillRect(x + w * 0.32, y + h * 0.2, w * 0.04, h * 0.05);
-            ctx.fillRect(x + w * 0.64, y + h * 0.2, w * 0.04, h * 0.05);
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+            ctx.fillRect(x + w * 0.35, y + h * 0.95, w * 0.1, h * 0.08);
+            ctx.fillRect(x + w * 0.55, y + h * 0.95, w * 0.1, h * 0.08);
 
             ctx.restore();
         }
 
         function drawEnemyShip(x, y, w, h, isBoss) {
-            const color = isBoss ? '#f0f' : '#f00';
-            const darkColor = isBoss ? '#a0a' : '#a00';
-            const lightColor = isBoss ? '#faf' : '#f88';
-
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.moveTo(x + w/2, y + h);
-            ctx.lineTo(x, y + h * 0.3);
-            ctx.lineTo(x + w * 0.3, y);
-            ctx.lineTo(x + w * 0.7, y);
-            ctx.lineTo(x + w, y + h * 0.3);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.fillStyle = darkColor;
-            ctx.fillRect(x, y + h * 0.4, w * 0.2, h * 0.3);
-            ctx.fillRect(x + w * 0.8, y + h * 0.4, w * 0.2, h * 0.3);
-
-            ctx.fillStyle = lightColor;
-            ctx.beginPath();
-            ctx.arc(x + w/2, y + h * 0.4, w * 0.15, 0, Math.PI * 2);
-            ctx.fill();
-
             if (isBoss) {
-                ctx.fillStyle = '#ff0';
-                ctx.fillRect(x + w * 0.45, y + h * 0.1, w * 0.1, h * 0.1);
+                // BOSS - Cooles Raumschiff-Design (umgedreht)
+                ctx.save();
+                ctx.fillStyle = '#ff00ff';
+                ctx.shadowColor = 'rgba(255, 0, 255, 0.6)';
+                ctx.shadowBlur = 15;
+
+                // Körper (nach unten zeigend)
+                ctx.beginPath();
+                ctx.moveTo(x + w * 0.5, y + h);  // Spitze unten
+                ctx.lineTo(x + w * 0.65, y + h * 0.4);
+                ctx.lineTo(x + w * 0.35, y + h * 0.4);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#dd00dd';
+                ctx.fillRect(x + w * 0.4, y + h * 0.1, w * 0.2, h * 0.4);
+
+                // Flügel
+                ctx.fillStyle = '#cc00cc';
+                ctx.beginPath();
+                ctx.moveTo(x, y + h * 0.6);
+                ctx.lineTo(x + w * 0.4, y + h * 0.7);
+                ctx.lineTo(x + w * 0.4, y + h * 0.2);
+                ctx.lineTo(x + w * 0.05, y + h * 0.15);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(x + w, y + h * 0.6);
+                ctx.lineTo(x + w * 0.6, y + h * 0.7);
+                ctx.lineTo(x + w * 0.6, y + h * 0.2);
+                ctx.lineTo(x + w * 0.95, y + h * 0.15);
+                ctx.closePath();
+                ctx.fill();
+
+                // Engine-Pods
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#bb00bb';
+                ctx.fillRect(x + w * 0.05, y, w * 0.15, h * 0.35);
+                ctx.fillRect(x + w * 0.8, y, w * 0.15, h * 0.35);
+
+                // Glühende Triebwerke
+                ctx.shadowColor = '#ff6600';
+                ctx.shadowBlur = 20;
+                const g1 = ctx.createRadialGradient(x + w * 0.125, y + h * 0.02, 0, x + w * 0.125, y + h * 0.02, w * 0.1);
+                g1.addColorStop(0, 'rgba(255, 255, 200, 1)');
+                g1.addColorStop(0.5, 'rgba(255, 150, 0, 0.9)');
+                g1.addColorStop(1, 'rgba(255, 100, 0, 0)');
+                ctx.fillStyle = g1;
+                ctx.fillRect(x + w * 0.05, y, w * 0.15, h * 0.1);
+
+                const g2 = ctx.createRadialGradient(x + w * 0.875, y + h * 0.02, 0, x + w * 0.875, y + h * 0.02, w * 0.1);
+                g2.addColorStop(0, 'rgba(255, 255, 200, 1)');
+                g2.addColorStop(0.5, 'rgba(255, 150, 0, 0.9)');
+                g2.addColorStop(1, 'rgba(255, 100, 0, 0)');
+                ctx.fillStyle = g2;
+                ctx.fillRect(x + w * 0.8, y, w * 0.15, h * 0.1);
+
+                ctx.restore();
+            } else {
+                // NORMALER GEGNER - Einfaches rotes Dreieck
+                ctx.fillStyle = '#f00';
+                ctx.shadowColor = 'rgba(255, 0, 0, 0.5)';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.moveTo(x + w/2, y + h);
+                ctx.lineTo(x, y + h * 0.3);
+                ctx.lineTo(x + w * 0.3, y);
+                ctx.lineTo(x + w * 0.7, y);
+                ctx.lineTo(x + w, y + h * 0.3);
+                ctx.closePath();
+                ctx.fill();
             }
+        }
+
+        function createExplosion(x, y, radius) {
+            explosions.push({
+                x: x,
+                y: y,
+                radius: radius,
+                maxRadius: radius,
+                alpha: 1,
+                particles: Array.from({ length: 20 }, () => ({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    size: Math.random() * 8 + 4,
+                    color: Math.random() > 0.5 ? '#ff6600' : '#ffaa00'
+                }))
+            });
+        }
+
+        function drawExplosions() {
+            explosions.forEach((exp, i) => {
+                // Hauptexplosion - Radial Gradient
+                ctx.save();
+                const gradient = ctx.createRadialGradient(exp.x, exp.y, 0, exp.x, exp.y, exp.radius);
+                gradient.addColorStop(0, `rgba(255, 255, 200, ${exp.alpha})`);
+                gradient.addColorStop(0.3, `rgba(255, 150, 0, ${exp.alpha * 0.8})`);
+                gradient.addColorStop(0.6, `rgba(255, 100, 0, ${exp.alpha * 0.5})`);
+                gradient.addColorStop(1, `rgba(255, 50, 0, 0)`);
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(exp.x, exp.y, exp.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Partikel
+                exp.particles.forEach(p => {
+                    ctx.fillStyle = `${p.color}${Math.floor(exp.alpha * 255).toString(16).padStart(2, '0')}`;
+                    ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+
+                    if (!isPaused) {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.3; // Gravitation
+                    }
+                });
+
+                ctx.restore();
+
+                // Animation
+                if (!isPaused) {
+                    exp.radius += exp.maxRadius * 0.08;
+                    exp.alpha -= 0.04;
+
+                    if (exp.alpha <= 0) {
+                        explosions.splice(i, 1);
+                    }
+                }
+            });
         }
 
         function drawPowerUp(x, y, w, h, type) {
@@ -821,6 +853,7 @@
 
             if (isPaused) {
                 drawPlayerShip(player.x, player.y, player.width, player.height);
+                drawExplosions();
                 bullets.forEach(b => {
                     ctx.fillStyle = '#ff0';
                     ctx.fillRect(b.x, b.y, b.width, b.height);
@@ -843,6 +876,9 @@
 
             drawPlayerShip(player.x, player.y, player.width, player.height);
 
+            // Explosionen zeichnen
+            drawExplosions();
+
             // Bullets
             bullets.forEach((b, i) => {
                 b.y -= 16;
@@ -862,13 +898,25 @@
                         e.health--;
                         bullets.splice(bi, 1);
                         if (e.health <= 0) {
+                            if (e.isBoss) {
+                                // Boss-Explosion beim Abschuss
+                                createExplosion(e.x + e.width/2, e.y + e.height/2, Math.max(e.width, e.height) * 1.8);
+                            }
                             enemies.splice(i, 1);
                             score += e.isBoss ? 25 : 10;
                         }
                     }
                 });
 
-                if (e.y > H) enemies.splice(i, 1);
+                // Unteren Rand erreicht
+                if (e.y > H) {
+                    if (e.isBoss) {
+                        // Boss-Explosion beim Erreichen des unteren Rands
+                        // Radius = 1.8 * Schiffsgröße
+                        createExplosion(e.x + e.width/2, H, Math.max(e.width, e.height) * 1.8);
+                    }
+                    enemies.splice(i, 1);
+                }
             });
 
             // PowerUps
