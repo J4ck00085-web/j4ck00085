@@ -15,7 +15,7 @@
         }
 
         body {
-            background: #000 url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23000" width="100" height="100"/><circle cx="10" cy="20" r="1" fill="%23fff" opacity="0.8"/><circle cx="80" cy="80" r="1.5" fill="%23fff" opacity="0.6"/><circle cx="50" cy="50" r="0.5" fill="%23fff" opacity="0.4"/></svg>') repeat;
+            background: #000 url('space-bg.jpg') center/cover no-repeat fixed;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -299,7 +299,12 @@
         const H = 1440;
 
         // ===== GAME STATE =====
-        let player = { x: 1230, y: 1340, width: 50, height: 40 };
+        // PC: Schiff 15% größer (50 * 1.15 = 57.5, 40 * 1.15 = 46)
+        const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+        const playerWidth = isMobile ? 50 : 57.5;
+        const playerHeight = isMobile ? 40 : 46;
+
+        let player = { x: 1230, y: 1340, width: playerWidth, height: playerHeight };
         let bullets = [];
         let enemies = [];
         let powerups = [];
@@ -476,7 +481,7 @@
         resumeBtn.addEventListener('click', closeSettings);
 
         restartBtn.addEventListener('click', () => {
-            player = { x: 1230, y: 1340, width: 50, height: 40 };
+            player = { x: 1230, y: 1340, width: playerWidth, height: playerHeight };
             bullets = [];
             enemies = [];
             powerups = [];
@@ -736,12 +741,13 @@
             }
 
             // Player Movement
+            // Geschwindigkeit 6% erhöht: 20 * 1.06 = 21.2, 13 * 1.06 = 13.78
             if (gyroEnabled && Math.abs(gyroTilt) > 0.05) {
-                player.x += gyroTilt * 20;
+                player.x += gyroTilt * 21.2;
                 player.x = Math.max(0, Math.min(2510, player.x));
             } else if (!gyroEnabled) {
-                if (moveLeft && player.x > 0) player.x -= 13;
-                if (moveRight && player.x < 2510) player.x += 13;
+                if (moveLeft && player.x > 0) player.x -= 13.78;
+                if (moveRight && player.x < 2510) player.x += 13.78;
             }
 
             drawPlayerShip(player.x, player.y, player.width, player.height);
