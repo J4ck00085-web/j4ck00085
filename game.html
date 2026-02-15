@@ -370,23 +370,21 @@
                 // - Links kippen = IMMER nach links (egal ob Handy zu dir oder weg)
                 // - Rechts kippen = IMMER nach rechts (egal ob Handy zu dir oder weg)
                 //
-                // PROBLEM: Gamma invertiert sich wenn Beta negativ wird
+                // PROBLEM: Gamma invertiert sich abhängig von Beta
                 // LÖSUNG: Beta-Bereich prüfen und Gamma entsprechend anpassen
 
                 let beta = event.beta;
                 let gamma = event.gamma;
 
-                // Beta normalisieren auf -180 bis +180
-                // Wenn Handy über vertikal gekippt ist (zu dir), ist Beta im Bereich 90-180 oder -90 bis -180
-
                 // Prüfe ob Handy "umgedreht" ist (Display nach unten oder stark zu dir geneigt)
                 if (Math.abs(beta) > 90) {
                     // Handy ist über 90° gekippt (zu dir oder Display nach unten)
-                    // In diesem Fall muss Gamma invertiert werden
-                    tilt = -gamma;
+                    // In diesem Fall ist Gamma normal
+                    tilt = gamma;
                 } else {
                     // Handy ist normal (flach oder von dir weg geneigt)
-                    tilt = gamma;
+                    // In diesem Fall muss Gamma invertiert werden
+                    tilt = -gamma;
                 }
 
             } else {
