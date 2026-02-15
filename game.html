@@ -1,14 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
-    <title>Space Shooter</title>
+    <title>Space Shooter 2K</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         body {
             background: #000;
@@ -18,6 +22,7 @@
             height: 100vh;
             overflow: hidden;
             touch-action: none;
+            font-family: Arial, sans-serif;
         }
 
         canvas {
@@ -26,9 +31,10 @@
             height: 100vh;
             display: block;
             object-fit: contain;
+            background: #000;
         }
 
-        /* Settings Button */
+        /* ===== SETTINGS BUTTON ===== */
         .settings-btn {
             position: fixed;
             top: 20px;
@@ -53,7 +59,19 @@
             transform: scale(0.95);
         }
 
-        /* Settings Menu */
+        /* ===== SETTINGS MENU ===== */
+        .settings-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2500;
+            display: none;
+        }
+
+        .settings-overlay.active {
+            display: block;
+        }
+
         .settings-menu {
             position: fixed;
             top: 50%;
@@ -75,7 +93,6 @@
         .settings-title {
             color: #0f0;
             font-size: 19px;
-            font-family: Arial, sans-serif;
             text-align: center;
             margin-bottom: 15px;
             font-weight: bold;
@@ -89,7 +106,6 @@
             margin: 6px 0;
             color: #0f0;
             font-size: 14px;
-            font-family: Arial, sans-serif;
             cursor: pointer;
             text-align: center;
             user-select: none;
@@ -99,28 +115,10 @@
             background: rgba(0, 255, 0, 0.5);
         }
 
-        .settings-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 2500;
-            display: none;
-        }
-
-        .settings-overlay.active {
-            display: block;
-        }
-
-        /* Mobile Controls - Gyroscope Mode */
+        /* ===== MOBILE SHOOT BUTTONS ===== */
         .mobile-controls {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             display: none;
             z-index: 1000;
             pointer-events: none;
@@ -159,30 +157,10 @@
             right: 10px;
         }
 
-        /* Gyroscope Indicator */
-        .gyro-indicator {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 255, 0, 0.3);
-            border: 2px solid #0f0;
-            border-radius: 10px;
-            padding: 10px 20px;
-            color: #0f0;
-            font-family: Arial, sans-serif;
-            font-size: 16px;
-            pointer-events: none;
-            display: none;
-        }
-
-        /* Start Screen für iOS */
+        /* ===== START SCREEN ===== */
         .start-screen {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            inset: 0;
             background: #000;
             color: #0f0;
             display: flex;
@@ -190,7 +168,6 @@
             justify-content: center;
             flex-direction: column;
             z-index: 10000;
-            font-family: Arial, sans-serif;
             text-align: center;
             padding: 20px;
         }
@@ -229,13 +206,10 @@
             color: #8f8;
         }
 
-        /* Querformat-Hinweis */
+        /* ===== LANDSCAPE WARNING ===== */
         .landscape-warning {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            inset: 0;
             background: #000;
             color: #0f0;
             display: none;
@@ -243,7 +217,6 @@
             justify-content: center;
             flex-direction: column;
             z-index: 9999;
-            font-family: Arial, sans-serif;
             text-align: center;
             padding: 20px;
         }
@@ -286,23 +259,19 @@
         <div class="settings-option" id="restartBtn">🔄 Neustart</div>
         <div class="settings-option" id="soundBtn">🔊 Sound: AN</div>
         <div class="settings-option" id="fullscreenBtn">⛶ Vollbild</div>
-        <div class="settings-option" id="exitBtn">❌ Verlassen</div>
     </div>
 
-    <!-- Mobile Controls - Gyroscope -->
-    <div class="mobile-controls" id="mobileControls">
+    <!-- Mobile Shoot Buttons -->
+    <div class="mobile-controls">
         <button class="shoot-btn shoot-btn-left" id="shootBtnLeft">🔥</button>
         <button class="shoot-btn shoot-btn-right" id="shootBtnRight">🔥</button>
     </div>
 
-    <!-- Gyroscope Indicator -->
-    <div class="gyro-indicator" id="gyroIndicator">📱 Neige dein Handy zum Steuern</div>
-
-    <!-- Start Screen für Mobile -->
+    <!-- Start Screen -->
     <div class="start-screen" id="startScreen">
         <div class="start-title">🚀 SPACE SHOOTER 🚀</div>
         <button class="start-button" id="startButton">SPIEL STARTEN</button>
-        <div class="start-info">📱 Handy nach vorne geneigt halten (Oberkante weg)<br>🎮 Links/Rechts schwenken zum Lenken<br>🔥 Tippe zum Schießen</div>
+        <div class="start-info">📱 Halte dein Handy FLACH im Querformat<br>🎮 Kippe Links/Rechts zum Lenken<br>🔥 Tippe zum Schießen</div>
     </div>
 
     <!-- Landscape Warning -->
@@ -312,9 +281,11 @@
     </div>
 
     <script>
-        // ===== CANVAS SETUP =====
+        // ===== CANVAS & CONTEXT =====
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
+        const W = 2560;
+        const H = 1440;
 
         // ===== GAME STATE =====
         let player = { x: 1230, y: 1340, width: 50, height: 40 };
@@ -326,99 +297,120 @@
         let rapidFireTimer = 0;
         let isPaused = false;
         let soundEnabled = true;
-
-        // ===== BACKGROUND =====
-        let stars = [];
-        let distantStars = [];
-
-        // Sterne initialisieren
-        for (let i = 0; i < 400; i++) {
-            distantStars.push({
-                x: Math.random() * 2560,
-                y: Math.random() * 1440,
-                size: Math.random() * 0.8 + 0.2,
-                brightness: Math.random() * 0.3 + 0.1
-            });
-        }
-
-        for (let i = 0; i < 200; i++) {
-            stars.push({
-                x: Math.random() * 2560,
-                y: Math.random() * 1440,
-                size: Math.random() * 1.5 + 0.5,
-                speed: Math.random() * 0.4 + 0.15,
-                brightness: Math.random() * 0.6 + 0.4,
-                twinkleSpeed: Math.random() * 0.015 + 0.005,
-                color: Math.random() > 0.8 ? 'blue' : (Math.random() > 0.5 ? 'white' : 'yellow')
-            });
-        }
+        let gameStarted = false;
 
         // ===== CONTROLS =====
         let moveLeft = false;
         let moveRight = false;
-        let gyroTilt = 0; // -1 (links) bis +1 (rechts)
+        let gyroTilt = 0;
         let gyroEnabled = false;
 
-        // ===== FULLSCREEN =====
+        // ===== BACKGROUND STARS =====
+        const distantStars = Array.from({ length: 400 }, () => ({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            size: Math.random() * 0.8 + 0.2,
+            brightness: Math.random() * 0.3 + 0.1
+        }));
+
+        const stars = Array.from({ length: 200 }, () => ({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            size: Math.random() * 1.5 + 0.5,
+            speed: Math.random() * 0.4 + 0.15,
+            brightness: Math.random() * 0.6 + 0.4,
+            twinkleSpeed: Math.random() * 0.015 + 0.005,
+            color: Math.random() > 0.8 ? 'blue' : (Math.random() > 0.5 ? 'white' : 'yellow')
+        }));
+
+        // ===== FULLSCREEN FUNCTIONS =====
         async function enterFullscreen() {
             const elem = document.documentElement;
             try {
-                if (elem.requestFullscreen) {
-                    await elem.requestFullscreen();
-                } else if (elem.webkitRequestFullscreen) {
-                    await elem.webkitRequestFullscreen();
-                } else if (elem.webkitEnterFullscreen) {
-                    await elem.webkitEnterFullscreen();
-                } else if (elem.mozRequestFullScreen) {
-                    await elem.mozRequestFullScreen();
-                } else if (elem.msRequestFullscreen) {
-                    await elem.msRequestFullscreen();
-                }
-                console.log('Fullscreen success');
+                if (elem.requestFullscreen) await elem.requestFullscreen();
+                else if (elem.webkitRequestFullscreen) await elem.webkitRequestFullscreen();
+                else if (elem.webkitEnterFullscreen) await elem.webkitEnterFullscreen();
+                else if (elem.mozRequestFullScreen) await elem.mozRequestFullScreen();
+                else if (elem.msRequestFullscreen) await elem.msRequestFullscreen();
             } catch (err) {
                 console.log("Fullscreen error:", err);
-                // Nicht werfen - Fullscreen ist optional
             }
         }
 
         function exitFullscreen() {
             try {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                else if (document.msExitFullscreen) document.msExitFullscreen();
             } catch (err) {
                 console.log("Exit fullscreen error:", err);
             }
         }
 
-        // Screen Orientation auf Querformat sperren
         function lockLandscape() {
-            if (screen.orientation && screen.orientation.lock) {
+            if (screen.orientation?.lock) {
                 screen.orientation.lock('landscape').catch(err => {
-                    console.log('Orientation lock not supported:', err);
+                    console.log('Orientation lock failed:', err);
                 });
             }
         }
 
-        // Auto-Fullscreen beim ersten Touch/Click
-        let fullscreenActivated = false;
-        function tryEnterFullscreen() {
-            if (!fullscreenActivated) {
-                enterFullscreen();
-                lockLandscape();
-                fullscreenActivated = true;
+        // ===== GYROSCOPE HANDLING =====
+        function handleOrientation(event) {
+            if (!event.beta || !event.gamma) return;
+
+            // Im QUERFORMAT: Beta-Achse für Links/Rechts
+            // Handy liegt FLACH horizontal
+            // Beta-Werte: -90 bis +90
+            // Links kippen = Beta steigt, Rechts kippen = Beta sinkt
+
+            const isLandscape = window.innerWidth > window.innerHeight;
+            let tilt = 0;
+
+            if (isLandscape) {
+                // QUERFORMAT: Beta nutzen, invertiert
+                // Beta -90 (links gekippt) = nach links
+                // Beta +90 (rechts gekippt) = nach rechts
+                tilt = -event.beta;
+            } else {
+                // HOCHFORMAT: Gamma nutzen
+                tilt = event.gamma;
             }
+
+            // Normalisieren: -25° bis +25° → -1 bis +1
+            tilt = Math.max(-25, Math.min(25, tilt));
+            gyroTilt = tilt / 25;
         }
 
-        // Desktop: Auto-Fullscreen
-        if (!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-            document.addEventListener('click', tryEnterFullscreen, { once: true });
+        function startGyroscope() {
+            window.addEventListener('deviceorientation', handleOrientation, true);
+            gyroEnabled = true;
+            console.log('✅ Gyroscope aktiviert');
+        }
+
+        async function enableGyroscope() {
+            return new Promise((resolve, reject) => {
+                if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
+                    // iOS 13+
+                    DeviceOrientationEvent.requestPermission()
+                        .then(state => {
+                            if (state === 'granted') {
+                                startGyroscope();
+                                resolve();
+                            } else {
+                                reject(new Error('Gyroscope permission denied'));
+                            }
+                        })
+                        .catch(reject);
+                } else if (typeof DeviceOrientationEvent !== 'undefined') {
+                    // Android
+                    startGyroscope();
+                    resolve();
+                } else {
+                    reject(new Error('Gyroscope not supported'));
+                }
+            });
         }
 
         // ===== SETTINGS MENU =====
@@ -429,7 +421,6 @@
         const restartBtn = document.getElementById('restartBtn');
         const soundBtn = document.getElementById('soundBtn');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
-        const exitBtn = document.getElementById('exitBtn');
 
         function openSettings() {
             isPaused = true;
@@ -443,17 +434,15 @@
             settingsOverlay.classList.remove('active');
         }
 
-        settingsBtn.addEventListener('click', (e) => {
+        settingsBtn.addEventListener('click', e => {
             e.stopPropagation();
             openSettings();
         });
 
         settingsOverlay.addEventListener('click', closeSettings);
-
         resumeBtn.addEventListener('click', closeSettings);
 
         restartBtn.addEventListener('click', () => {
-            // Game neu starten
             player = { x: 1230, y: 1340, width: 50, height: 40 };
             bullets = [];
             enemies = [];
@@ -470,45 +459,24 @@
         });
 
         fullscreenBtn.addEventListener('click', () => {
-            if (document.fullscreenElement) {
-                exitFullscreen();
-            } else {
-                enterFullscreen();
-            }
-        });
-
-        exitBtn.addEventListener('click', () => {
-            if (confirm('Spiel wirklich verlassen?')) {
-                window.close();
-                // Fallback wenn window.close() nicht funktioniert
-                window.location.href = 'about:blank';
-            }
+            document.fullscreenElement ? exitFullscreen() : enterFullscreen();
         });
 
         // ===== KEYBOARD CONTROLS =====
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
-                if (settingsMenu.classList.contains('active')) {
-                    closeSettings();
-                } else if (document.fullscreenElement) {
-                    exitFullscreen();
-                }
+                settingsMenu.classList.contains('active') ? closeSettings() :
+                document.fullscreenElement ? exitFullscreen() : null;
                 return;
             }
-
             if (e.key === 'p' || e.key === 'P') {
-                if (settingsMenu.classList.contains('active')) return;
-                openSettings();
+                if (!settingsMenu.classList.contains('active')) openSettings();
                 return;
             }
-
             if (isPaused) return;
-
             if (e.key === 'ArrowLeft') moveLeft = true;
             if (e.key === 'ArrowRight') moveRight = true;
-            if (e.key === ' ' && !e.repeat) {
-                shoot();
-            }
+            if (e.key === ' ' && !e.repeat) shoot();
         });
 
         document.addEventListener('keyup', e => {
@@ -516,202 +484,96 @@
             if (e.key === 'ArrowRight') moveRight = false;
         });
 
-        // ===== GYROSCOPE/ACCELEROMETER CONTROLS =====
-        const mobileControls = document.getElementById('mobileControls');
-        const gyroIndicator = document.getElementById('gyroIndicator');
+        // ===== MOBILE CONTROLS =====
         const shootBtnLeft = document.getElementById('shootBtnLeft');
         const shootBtnRight = document.getElementById('shootBtnRight');
 
+        shootBtnLeft.addEventListener('touchstart', e => {
+            e.preventDefault();
+            shoot();
+        });
 
-        function startGyroscope() {
-            console.log('Gyroscope started - adding event listener');
-            window.addEventListener('deviceorientation', handleOrientation, true);
-            gyroEnabled = true;
+        shootBtnRight.addEventListener('touchstart', e => {
+            e.preventDefault();
+            shoot();
+        });
 
-            // Indicator anzeigen
-            gyroIndicator.style.display = 'block';
-            gyroIndicator.textContent = '📱 Gyroscope aktiviert!';
-            setTimeout(() => {
-                gyroIndicator.style.display = 'none';
-            }, 4000);
-        }
-
-        function handleOrientation(event) {
-            if (event.gamma === null) {
-                console.log('No gyro data');
-                return;
-            }
-
-            // NUR GAMMA-ACHSE für Links/Rechts
-            // Handy FLACH horizontal halten (Querformat)
-            // Links kippen = negativ, Rechts kippen = positiv
-            let tilt = event.gamma;
-
-            // Debug
-            if (Math.random() < 0.03) {
-                console.log('Gamma:', event.gamma, 'Tilt:', tilt);
-            }
-
-            // Normalisieren: -25° bis +25° wird zu -1 bis +1
-            tilt = Math.max(-25, Math.min(25, tilt));
-            gyroTilt = tilt / 25;
-
-            // Debug
-            if (Math.random() < 0.02) {
-                console.log('Final Tilt:', tilt, 'GyroTilt:', gyroTilt);
-            }
-        }
-
-        // Start Screen Handler
+        // ===== START SCREEN =====
         const startScreen = document.getElementById('startScreen');
         const startButton = document.getElementById('startButton');
 
-        let gameStarted = false;
-        let gyroActivated = false;
-
-        // Desktop: Kein Start-Screen
+        // Desktop: Kein Start Screen
         if (!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
             startScreen.classList.add('hidden');
             gameStarted = true;
         }
 
-        // Start Button Click Handler
-        startButton.addEventListener('click', async function(e) {
-            console.log('START button clicked');
-            e.preventDefault();
-
+        startButton.addEventListener('click', async () => {
             try {
-                // 1. Fullscreen aktivieren
-                console.log('Trying fullscreen...');
                 await enterFullscreen();
                 lockLandscape();
-                console.log('Fullscreen activated');
-
-                // 2. Gyroscope aktivieren
-                console.log('Trying gyroscope...');
                 await enableGyroscope();
-                console.log('Gyroscope activated');
-
-                // 3. Start Screen ausblenden
                 startScreen.classList.add('hidden');
                 gameStarted = true;
-                gyroActivated = true;
-
-                console.log('Game started!');
             } catch (err) {
                 console.error('Start error:', err);
-                alert('Fehler beim Starten: ' + err.message);
+                alert('Fehler: ' + err.message);
             }
-        });
-
-        // Gyroscope aktivieren (Promise-basiert)
-        async function enableGyroscope() {
-            console.log('enableGyroscope called');
-
-            return new Promise((resolve, reject) => {
-                // iOS 13+ Permission
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    console.log('Requesting iOS permission...');
-                    DeviceOrientationEvent.requestPermission()
-                        .then(permissionState => {
-                            console.log('Permission state:', permissionState);
-                            if (permissionState === 'granted') {
-                                startGyroscope();
-                                resolve();
-                            } else {
-                                reject(new Error('Gyroscope permission denied'));
-                            }
-                        })
-                        .catch(err => {
-                            console.error('Permission error:', err);
-                            reject(err);
-                        });
-                } else if (typeof DeviceOrientationEvent !== 'undefined') {
-                    // Android
-                    console.log('Starting gyroscope (no permission needed)');
-                    startGyroscope();
-                    resolve();
-                } else {
-                    console.log('DeviceOrientation not supported');
-                    reject(new Error('Gyroscope not supported'));
-                }
-            });
-        }
-
-        // ===== MOBILE SHOOT BUTTONS =====
-        shootBtnLeft.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            shoot();
-        });
-
-        shootBtnRight.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            shoot();
         });
 
         // ===== SHOOT FUNCTION =====
         function shoot() {
             if (isPaused) return;
             if (weaponType === 'triple') {
-                bullets.push({ x: player.x + 15, y: player.y, width: 4, height: 10 });
-                bullets.push({ x: player.x + 23, y: player.y, width: 4, height: 10 });
-                bullets.push({ x: player.x + 31, y: player.y, width: 4, height: 10 });
+                bullets.push(
+                    { x: player.x + 15, y: player.y, width: 4, height: 10 },
+                    { x: player.x + 23, y: player.y, width: 4, height: 10 },
+                    { x: player.x + 31, y: player.y, width: 4, height: 10 }
+                );
             } else {
                 bullets.push({ x: player.x + 23, y: player.y, width: 4, height: 10 });
             }
         }
 
-        // ===== ENEMY SPAWNER =====
+        // ===== SPAWNERS =====
         setInterval(() => {
             if (isPaused) return;
-            if (Math.random() < 0.2) {
-                enemies.push({
-                    x: Math.random() * 2400,
-                    y: -80,
-                    width: 80,
-                    height: 80,
-                    health: 2,
-                    isBoss: true
-                });
-            } else {
-                enemies.push({
-                    x: Math.random() * 2520,
-                    y: -40,
-                    width: 40,
-                    height: 40,
-                    health: 1,
-                    isBoss: false
-                });
-            }
+            const isBoss = Math.random() < 0.2;
+            enemies.push({
+                x: Math.random() * (isBoss ? 2400 : 2520),
+                y: isBoss ? -80 : -40,
+                width: isBoss ? 80 : 40,
+                height: isBoss ? 80 : 40,
+                health: isBoss ? 2 : 1,
+                isBoss
+            });
         }, 1500);
 
-        // ===== POWERUP SPAWNER =====
         setInterval(() => {
             if (isPaused) return;
             const types = ['triple', 'rapid', 'shield', 'laser', 'nuke', 'speed', 'slow', 'magnet', 'invincible', 'multishot'];
-            const type = types[Math.floor(Math.random() * types.length)];
             powerups.push({
                 x: Math.random() * 2515,
                 y: -45,
                 width: 45,
                 height: 45,
-                type: type
+                type: types[Math.floor(Math.random() * types.length)]
             });
         }, 8000);
 
         // ===== DRAW FUNCTIONS =====
-        function drawSpaceBackground() {
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(0, 0, 2560, 1440);
+        function drawBackground() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, W, H);
 
-            const milkyWayGradient = ctx.createLinearGradient(0, 0, 2560, 1440);
-            milkyWayGradient.addColorStop(0, 'rgba(30, 30, 50, 0)');
-            milkyWayGradient.addColorStop(0.3, 'rgba(50, 50, 80, 0.15)');
-            milkyWayGradient.addColorStop(0.5, 'rgba(70, 70, 100, 0.25)');
-            milkyWayGradient.addColorStop(0.7, 'rgba(50, 50, 80, 0.15)');
-            milkyWayGradient.addColorStop(1, 'rgba(30, 30, 50, 0)');
-            ctx.fillStyle = milkyWayGradient;
-            ctx.fillRect(0, 0, 2560, 1440);
+            const gradient = ctx.createLinearGradient(0, 0, W, H);
+            gradient.addColorStop(0, 'rgba(30, 30, 50, 0)');
+            gradient.addColorStop(0.3, 'rgba(50, 50, 80, 0.15)');
+            gradient.addColorStop(0.5, 'rgba(70, 70, 100, 0.25)');
+            gradient.addColorStop(0.7, 'rgba(50, 50, 80, 0.15)');
+            gradient.addColorStop(1, 'rgba(30, 30, 50, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, W, H);
 
             distantStars.forEach(s => {
                 ctx.fillStyle = `rgba(255, 255, 255, ${s.brightness})`;
@@ -724,31 +586,23 @@
                     if (s.brightness > 1 || s.brightness < 0.4) {
                         s.twinkleSpeed = -s.twinkleSpeed;
                     }
-
                     s.y += s.speed;
-                    if (s.y > 1440) {
+                    if (s.y > H) {
                         s.y = 0;
-                        s.x = Math.random() * 2560;
+                        s.x = Math.random() * W;
                     }
                 }
 
-                let r, g, b;
-                if (s.color === 'blue') {
-                    r = 150; g = 180; b = 255;
-                } else if (s.color === 'yellow') {
-                    r = 255; g = 245; b = 200;
-                } else {
-                    r = 255; g = 255; b = 255;
-                }
+                const [r, g, b] = s.color === 'blue' ? [150, 180, 255] :
+                                  s.color === 'yellow' ? [255, 245, 200] : [255, 255, 255];
 
-                const alpha = s.brightness;
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${s.brightness})`;
                 ctx.beginPath();
                 ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
                 ctx.fill();
 
-                if (s.size > 1 && alpha > 0.7) {
-                    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.5})`;
+                if (s.size > 1 && s.brightness > 0.7) {
+                    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${s.brightness * 0.5})`;
                     ctx.lineWidth = 0.5;
                     ctx.beginPath();
                     ctx.moveTo(s.x - s.size * 3, s.y);
@@ -760,190 +614,129 @@
             });
         }
 
-        function drawPlayerShip(x, y, width, height) {
+        function drawPlayerShip(x, y, w, h) {
             ctx.fillStyle = '#0f0';
             ctx.beginPath();
-            ctx.moveTo(x + width/2, y);
-            ctx.lineTo(x + width, y + height * 0.7);
-            ctx.lineTo(x + width * 0.7, y + height);
-            ctx.lineTo(x + width * 0.3, y + height);
-            ctx.lineTo(x, y + height * 0.7);
+            ctx.moveTo(x + w/2, y);
+            ctx.lineTo(x + w, y + h * 0.7);
+            ctx.lineTo(x + w * 0.7, y + h);
+            ctx.lineTo(x + w * 0.3, y + h);
+            ctx.lineTo(x, y + h * 0.7);
             ctx.closePath();
             ctx.fill();
 
             ctx.fillStyle = '#0a0';
-            ctx.fillRect(x, y + height * 0.5, width * 0.2, height * 0.4);
-            ctx.fillRect(x + width * 0.8, y + height * 0.5, width * 0.2, height * 0.4);
+            ctx.fillRect(x, y + h * 0.5, w * 0.2, h * 0.4);
+            ctx.fillRect(x + w * 0.8, y + h * 0.5, w * 0.2, h * 0.4);
 
             ctx.fillStyle = '#8f8';
             ctx.beginPath();
-            ctx.arc(x + width/2, y + height * 0.5, width * 0.15, 0, Math.PI * 2);
+            ctx.arc(x + w/2, y + h * 0.5, w * 0.15, 0, Math.PI * 2);
             ctx.fill();
 
             ctx.fillStyle = '#0ff';
-            ctx.fillRect(x + width * 0.35, y + height * 0.95, width * 0.1, height * 0.08);
-            ctx.fillRect(x + width * 0.55, y + height * 0.95, width * 0.1, height * 0.08);
+            ctx.fillRect(x + w * 0.35, y + h * 0.95, w * 0.1, h * 0.08);
+            ctx.fillRect(x + w * 0.55, y + h * 0.95, w * 0.1, h * 0.08);
         }
 
-        function drawEnemyShip(x, y, width, height, isBoss) {
+        function drawEnemyShip(x, y, w, h, isBoss) {
             const color = isBoss ? '#f0f' : '#f00';
+            const darkColor = isBoss ? '#a0a' : '#a00';
+            const lightColor = isBoss ? '#faf' : '#f88';
+
             ctx.fillStyle = color;
             ctx.beginPath();
-            ctx.moveTo(x + width/2, y + height);
-            ctx.lineTo(x, y + height * 0.3);
-            ctx.lineTo(x + width * 0.3, y);
-            ctx.lineTo(x + width * 0.7, y);
-            ctx.lineTo(x + width, y + height * 0.3);
+            ctx.moveTo(x + w/2, y + h);
+            ctx.lineTo(x, y + h * 0.3);
+            ctx.lineTo(x + w * 0.3, y);
+            ctx.lineTo(x + w * 0.7, y);
+            ctx.lineTo(x + w, y + h * 0.3);
             ctx.closePath();
             ctx.fill();
 
-            ctx.fillStyle = isBoss ? '#a0a' : '#a00';
-            ctx.fillRect(x, y + height * 0.4, width * 0.2, height * 0.3);
-            ctx.fillRect(x + width * 0.8, y + height * 0.4, width * 0.2, height * 0.3);
+            ctx.fillStyle = darkColor;
+            ctx.fillRect(x, y + h * 0.4, w * 0.2, h * 0.3);
+            ctx.fillRect(x + w * 0.8, y + h * 0.4, w * 0.2, h * 0.3);
 
-            ctx.fillStyle = isBoss ? '#faf' : '#f88';
+            ctx.fillStyle = lightColor;
             ctx.beginPath();
-            ctx.arc(x + width/2, y + height * 0.4, width * 0.15, 0, Math.PI * 2);
+            ctx.arc(x + w/2, y + h * 0.4, w * 0.15, 0, Math.PI * 2);
             ctx.fill();
 
             if (isBoss) {
                 ctx.fillStyle = '#ff0';
-                ctx.fillRect(x + width * 0.45, y + height * 0.1, width * 0.1, height * 0.1);
+                ctx.fillRect(x + w * 0.45, y + h * 0.1, w * 0.1, h * 0.1);
             }
         }
 
-        function drawPowerUp(x, y, width, height, type) {
-            if (type === 'triple') {
-                ctx.fillStyle = '#fa0';
-                ctx.beginPath();
-                for (let i = 0; i < 5; i++) {
-                    const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-                    const radius = i % 2 === 0 ? width/2 : width/4;
-                    ctx.lineTo(x + width/2 + Math.cos(angle) * radius, y + height/2 + Math.sin(angle) * radius);
-                }
-                ctx.closePath();
-                ctx.fill();
-                ctx.fillStyle = '#fff';
-                ctx.font = '16px Arial';
-                ctx.fillText('3X', x + width/2 - 10, y + height/2 + 5);
-            } else if (type === 'rapid') {
-                ctx.fillStyle = '#0af';
-                ctx.beginPath();
-                ctx.moveTo(x + width/2, y);
-                ctx.lineTo(x + width * 0.6, y + height * 0.4);
-                ctx.lineTo(x + width * 0.55, y + height * 0.5);
-                ctx.lineTo(x + width * 0.7, y + height);
-                ctx.lineTo(x + width * 0.4, y + height * 0.6);
-                ctx.lineTo(x + width * 0.45, y + height * 0.5);
-                ctx.lineTo(x + width * 0.3, y + height * 0.4);
-                ctx.closePath();
-                ctx.fill();
-            } else if (type === 'shield') {
-                ctx.strokeStyle = '#0f0';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.arc(x + width/2, y + height/2, width/2.5, 0, Math.PI * 2);
-                ctx.stroke();
-            } else if (type === 'laser') {
-                ctx.fillStyle = '#f00';
-                ctx.fillRect(x + width * 0.4, y, width * 0.2, height);
-                ctx.fillStyle = '#ff0';
-                ctx.fillRect(x + width * 0.42, y, width * 0.16, height);
-            } else if (type === 'nuke') {
-                ctx.fillStyle = '#f0f';
-                ctx.beginPath();
-                ctx.arc(x + width/2, y + height/2, width/2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#fff';
-                ctx.font = '20px Arial';
-                ctx.fillText('💣', x + width/2 - 10, y + height/2 + 8);
-            } else if (type === 'speed') {
-                ctx.fillStyle = '#ff0';
-                for (let i = 0; i < 3; i++) {
+        function drawPowerUp(x, y, w, h, type) {
+            const designs = {
+                triple: () => {
+                    ctx.fillStyle = '#fa0';
                     ctx.beginPath();
-                    ctx.moveTo(x + i * 15, y + height/2);
-                    ctx.lineTo(x + i * 15 + 10, y + height/2 - 10);
-                    ctx.lineTo(x + i * 15 + 10, y + height/2 + 10);
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+                        const r = i % 2 === 0 ? w/2 : w/4;
+                        ctx.lineTo(x + w/2 + Math.cos(angle) * r, y + h/2 + Math.sin(angle) * r);
+                    }
                     ctx.closePath();
                     ctx.fill();
-                }
-            } else if (type === 'slow') {
-                ctx.fillStyle = '#08f';
-                ctx.beginPath();
-                ctx.arc(x + width/2, y + height/2, width/2.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#fff';
-                ctx.font = '24px Arial';
-                ctx.fillText('❄', x + width/2 - 8, y + height/2 + 8);
-            } else if (type === 'magnet') {
-                ctx.strokeStyle = '#f00';
-                ctx.lineWidth = 5;
-                ctx.beginPath();
-                ctx.arc(x + width/2, y + height/2, width/3, Math.PI, 0);
-                ctx.stroke();
-                ctx.fillStyle = '#f00';
-                ctx.fillRect(x + width * 0.2, y + height/2, width * 0.15, height * 0.4);
-                ctx.fillStyle = '#00f';
-                ctx.fillRect(x + width * 0.65, y + height/2, width * 0.15, height * 0.4);
-            } else if (type === 'invincible') {
-                ctx.fillStyle = '#ff0';
-                for (let i = 0; i < 8; i++) {
-                    const angle = (i * Math.PI) / 4;
-                    const r = width/2;
+                },
+                rapid: () => {
+                    ctx.fillStyle = '#0af';
                     ctx.beginPath();
-                    ctx.moveTo(x + width/2, y + height/2);
-                    ctx.arc(x + width/2, y + height/2, r, angle - 0.2, angle + 0.2);
+                    ctx.moveTo(x + w/2, y);
+                    ctx.lineTo(x + w * 0.6, y + h * 0.4);
+                    ctx.lineTo(x + w * 0.55, y + h * 0.5);
+                    ctx.lineTo(x + w * 0.7, y + h);
+                    ctx.lineTo(x + w * 0.4, y + h * 0.6);
+                    ctx.lineTo(x + w * 0.45, y + h * 0.5);
+                    ctx.lineTo(x + w * 0.3, y + h * 0.4);
                     ctx.closePath();
                     ctx.fill();
-                }
-            } else if (type === 'multishot') {
-                ctx.fillStyle = '#f0f';
-                for (let i = 0; i < 5; i++) {
+                },
+                shield: () => {
+                    ctx.strokeStyle = '#0f0';
+                    ctx.lineWidth = 4;
                     ctx.beginPath();
-                    ctx.arc(x + (i * width/4), y + height/2, width/8, 0, Math.PI * 2);
+                    ctx.arc(x + w/2, y + h/2, w/2.5, 0, Math.PI * 2);
+                    ctx.stroke();
+                },
+                nuke: () => {
+                    ctx.fillStyle = '#f0f';
+                    ctx.beginPath();
+                    ctx.arc(x + w/2, y + h/2, w/2, 0, Math.PI * 2);
                     ctx.fill();
                 }
-            }
+            };
+
+            (designs[type] || (() => {
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(x, y, w, h);
+            }))();
         }
 
         // ===== GAME LOOP =====
         function gameLoop() {
-            drawSpaceBackground();
+            drawBackground();
 
             if (isPaused) {
                 drawPlayerShip(player.x, player.y, player.width, player.height);
-
                 bullets.forEach(b => {
                     ctx.fillStyle = '#ff0';
                     ctx.fillRect(b.x, b.y, b.width, b.height);
                 });
-
-                enemies.forEach(e => {
-                    drawEnemyShip(e.x, e.y, e.width, e.height, e.isBoss);
-                });
-
-                powerups.forEach(p => {
-                    drawPowerUp(p.x, p.y, p.width, p.height, p.type);
-                });
-
+                enemies.forEach(e => drawEnemyShip(e.x, e.y, e.width, e.height, e.isBoss));
+                powerups.forEach(p => drawPowerUp(p.x, p.y, p.width, p.height, p.type));
                 requestAnimationFrame(gameLoop);
                 return;
             }
 
-                // Player movement
+            // Player Movement
             if (gyroEnabled && Math.abs(gyroTilt) > 0.05) {
-                // Gyroscope-Steuerung (Mobile)
-                const speed = gyroTilt * 20; // 20px max speed
-                player.x += speed;
-                if (player.x < 0) player.x = 0;
-                if (player.x > 2510) player.x = 2510;
-
-                // Debug: Position anzeigen
-                if (Math.random() < 0.02) {
-                    console.log('Player X:', player.x, 'Speed:', speed);
-                }
+                player.x += gyroTilt * 20;
+                player.x = Math.max(0, Math.min(2510, player.x));
             } else if (!gyroEnabled) {
-                // Tastatur-Steuerung (Desktop)
                 if (moveLeft && player.x > 0) player.x -= 13;
                 if (moveRight && player.x < 2510) player.x += 13;
             }
@@ -968,7 +761,6 @@
                         b.y < e.y + e.height && b.y + b.height > e.y) {
                         e.health--;
                         bullets.splice(bi, 1);
-
                         if (e.health <= 0) {
                             enemies.splice(i, 1);
                             score += e.isBoss ? 25 : 10;
@@ -976,7 +768,7 @@
                     }
                 });
 
-                if (e.y > 1440) enemies.splice(i, 1);
+                if (e.y > H) enemies.splice(i, 1);
             });
 
             // PowerUps
@@ -992,31 +784,17 @@
                         setTimeout(() => weaponType = 'normal', 10000);
                     } else if (p.type === 'rapid') {
                         rapidFireTimer = 300;
-                    } else if (p.type === 'shield') {
-                        score += 50;
-                    } else if (p.type === 'laser') {
-                        weaponType = 'laser';
-                        setTimeout(() => weaponType = 'normal', 8000);
                     } else if (p.type === 'nuke') {
                         score += enemies.length * 15;
                         enemies = [];
-                    } else if (p.type === 'speed') {
-                        score += 30;
-                    } else if (p.type === 'slow') {
-                        score += 40;
-                    } else if (p.type === 'magnet') {
-                        score += 100;
-                    } else if (p.type === 'invincible') {
-                        score += 75;
-                    } else if (p.type === 'multishot') {
-                        weaponType = 'multishot';
-                        setTimeout(() => weaponType = 'normal', 12000);
+                    } else {
+                        score += 50;
                     }
 
                     powerups.splice(i, 1);
                 }
 
-                if (p.y > 1440) powerups.splice(i, 1);
+                if (p.y > H) powerups.splice(i, 1);
             });
 
             // Rapid Fire
@@ -1042,13 +820,6 @@
                 ctx.fillStyle = '#0af';
                 ctx.font = '40px Arial';
                 ctx.fillText('⚡ RAPID FIRE', 30, weaponType === 'triple' ? 200 : 140);
-            }
-
-            // Debug: Gyroscope Status anzeigen
-            if (gyroEnabled) {
-                ctx.fillStyle = '#ff0';
-                ctx.font = '30px Arial';
-                ctx.fillText('GYRO: ' + gyroTilt.toFixed(2), 30, weaponType === 'triple' || rapidFireTimer > 0 ? 260 : 140);
             }
 
             requestAnimationFrame(gameLoop);
