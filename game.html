@@ -537,30 +537,19 @@
         }
 
         function handleOrientation(event) {
-            if (event.gamma === null || event.beta === null) {
+            if (event.gamma === null) {
                 console.log('No gyro data');
                 return;
             }
 
-            let tilt = 0;
+            // NUR GAMMA-ACHSE für Links/Rechts
+            // Handy FLACH horizontal halten (Querformat)
+            // Links kippen = negativ, Rechts kippen = positiv
+            let tilt = event.gamma;
 
-            // QUERFORMAT - Handy FLACH horizontal wie auf dem Bild
-            // Wie ein Gaming-Controller horizontal halten
-            // Links/Rechts KIPPEN (Gamma-Achse)
-
-            if (window.innerWidth > window.innerHeight) {
-                // GAMMA für Links-Rechts Kippen wenn Handy FLACH liegt
-                // Gamma positiv = rechts geneigt
-                // Gamma negativ = links geneigt
-                tilt = event.gamma;
-
-                // Debug
-                if (Math.random() < 0.03) {
-                    console.log('Gamma:', event.gamma, 'Beta:', event.beta, 'Tilt:', tilt);
-                }
-            } else {
-                // Hochformat
-                tilt = event.beta;
+            // Debug
+            if (Math.random() < 0.03) {
+                console.log('Gamma:', event.gamma, 'Tilt:', tilt);
             }
 
             // Normalisieren: -25° bis +25° wird zu -1 bis +1
