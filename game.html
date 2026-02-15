@@ -630,44 +630,109 @@
         }
 
         function drawPlayerShip(x, y, w, h) {
-            if (shipImageLoaded) {
-                // Raumschiff-Bild zeichnen
-                ctx.save();
+            ctx.save();
 
-                // Schärferes Rendering
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
+            // HAUPTKÖRPER - Helles Grau/Weiß
+            ctx.fillStyle = '#e8e8e8';
+            ctx.fillRect(x + w * 0.35, y, w * 0.3, h * 0.8);
 
-                // Bild zentriert zeichnen
-                ctx.drawImage(shipImage, x - w * 0.1, y - h * 0.1, w * 1.2, h * 1.2);
+            // FLÜGEL - Breite Flügel links/rechts
+            ctx.fillStyle = '#d0d0d0';
+            ctx.beginPath();
+            ctx.moveTo(x, y + h * 0.3);
+            ctx.lineTo(x + w * 0.35, y + h * 0.2);
+            ctx.lineTo(x + w * 0.35, y + h * 0.6);
+            ctx.lineTo(x, y + h * 0.7);
+            ctx.closePath();
+            ctx.fill();
 
-                ctx.restore();
+            ctx.beginPath();
+            ctx.moveTo(x + w, y + h * 0.3);
+            ctx.lineTo(x + w * 0.65, y + h * 0.2);
+            ctx.lineTo(x + w * 0.65, y + h * 0.6);
+            ctx.lineTo(x + w, y + h * 0.7);
+            ctx.closePath();
+            ctx.fill();
 
-                // Glühen-Effekt für Triebwerke
-                ctx.save();
-                ctx.shadowColor = '#0ff';
-                ctx.shadowBlur = 15;
-                ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
-                ctx.fillRect(x + w * 0.35, y + h * 0.95, w * 0.1, h * 0.08);
-                ctx.fillRect(x + w * 0.55, y + h * 0.95, w * 0.1, h * 0.08);
-                ctx.restore();
-            } else {
-                // Fallback: Original-Design wenn Bild noch nicht geladen
-                ctx.fillStyle = '#0f0';
-                ctx.beginPath();
-                ctx.moveTo(x + w/2, y);
-                ctx.lineTo(x + w, y + h * 0.7);
-                ctx.lineTo(x + w * 0.7, y + h);
-                ctx.lineTo(x + w * 0.3, y + h);
-                ctx.lineTo(x, y + h * 0.7);
-                ctx.closePath();
-                ctx.fill();
+            // COCKPIT - Vorne spitz, hell
+            ctx.fillStyle = '#f5f5f5';
+            ctx.beginPath();
+            ctx.moveTo(x + w * 0.5, y - h * 0.1);
+            ctx.lineTo(x + w * 0.35, y + h * 0.3);
+            ctx.lineTo(x + w * 0.65, y + h * 0.3);
+            ctx.closePath();
+            ctx.fill();
 
-                // Triebwerke
-                ctx.fillStyle = '#0ff';
-                ctx.fillRect(x + w * 0.35, y + h * 0.95, w * 0.1, h * 0.08);
-                ctx.fillRect(x + w * 0.55, y + h * 0.95, w * 0.1, h * 0.08);
-            }
+            // SEITLICHE TRIEBWERKE - Große runde Triebwerke
+            ctx.fillStyle = '#b0b0b0';
+            ctx.beginPath();
+            ctx.ellipse(x + w * 0.15, y + h * 0.5, w * 0.12, h * 0.15, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.ellipse(x + w * 0.85, y + h * 0.5, w * 0.12, h * 0.15, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // ZENTRALE TRIEBWERKE - Hinten am Körper
+            ctx.fillStyle = '#a0a0a0';
+            ctx.fillRect(x + w * 0.38, y + h * 0.75, w * 0.08, h * 0.15);
+            ctx.fillRect(x + w * 0.54, y + h * 0.75, w * 0.08, h * 0.15);
+
+            // BLAUE AKZENTE - Cyan Lichter an den Seiten
+            ctx.fillStyle = '#0ff';
+            ctx.fillRect(x + w * 0.05, y + h * 0.4, w * 0.04, h * 0.08);
+            ctx.fillRect(x + w * 0.91, y + h * 0.4, w * 0.04, h * 0.08);
+
+            // DETAILLINIEN - Dunkle Linien für Details
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + w * 0.35, y, w * 0.3, h * 0.8);
+
+            // GLÜHENDE TRIEBWERKE - Orange/Cyan Flammen
+            ctx.save();
+            ctx.shadowColor = '#ff6600';
+            ctx.shadowBlur = 20;
+
+            // Linkes Triebwerk
+            ctx.fillStyle = 'rgba(255, 120, 0, 0.9)';
+            ctx.beginPath();
+            ctx.ellipse(x + w * 0.15, y + h * 0.92, w * 0.08, h * 0.12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255, 200, 0, 0.7)';
+            ctx.beginPath();
+            ctx.ellipse(x + w * 0.15, y + h * 0.92, w * 0.05, h * 0.08, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rechtes Triebwerk
+            ctx.fillStyle = 'rgba(255, 120, 0, 0.9)';
+            ctx.beginPath();
+            ctx.ellipse(x + w * 0.85, y + h * 0.92, w * 0.08, h * 0.12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255, 200, 0, 0.7)';
+            ctx.beginPath();
+            ctx.ellipse(x + w * 0.85, y + h * 0.92, w * 0.05, h * 0.08, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Zentrale Triebwerke - Cyan
+            ctx.shadowColor = '#0ff';
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+            ctx.fillRect(x + w * 0.38, y + h * 0.90, w * 0.08, h * 0.12);
+            ctx.fillRect(x + w * 0.54, y + h * 0.90, w * 0.08, h * 0.12);
+
+            ctx.restore();
+
+            // WAFFENSYSTEM - Kanonen vorne
+            ctx.fillStyle = '#c0c0c0';
+            ctx.fillRect(x + w * 0.25, y + h * 0.1, w * 0.05, h * 0.3);
+            ctx.fillRect(x + w * 0.70, y + h * 0.1, w * 0.05, h * 0.3);
+
+            // Mündungen
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x + w * 0.25, y + h * 0.1, w * 0.05, h * 0.08);
+            ctx.fillRect(x + w * 0.70, y + h * 0.1, w * 0.05, h * 0.08);
+
+            ctx.restore();
         }
 
         function drawEnemyShip(x, y, w, h, isBoss) {
