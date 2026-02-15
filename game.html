@@ -544,31 +544,30 @@
 
             let tilt = 0;
 
-            // Querformat - Handy wird HOCHKANT gehalten (wie ein Lenkrad)
-            // Beta-Achse: Vorne-Hinten Neigung
-            // Wenn Lautstärke-Tasten-Seite (links) nach unten = negativ = links
-            // Wenn SIM-Karten-Seite (rechts) nach unten = positiv = rechts
+            // QUERFORMAT - Handy FLACH horizontal wie auf dem Bild
+            // Wie ein Gaming-Controller horizontal halten
+            // Links/Rechts KIPPEN (Gamma-Achse)
 
             if (window.innerWidth > window.innerHeight) {
-                // GAMMA verwenden für Links-Rechts Schwenken
-                // Handy nach VORNE geneigt halten (Oberkante weg von dir)
-                // Dann LINKS/RECHTS schwenken (Gamma-Achse)
+                // GAMMA für Links-Rechts Kippen wenn Handy FLACH liegt
+                // Gamma positiv = rechts geneigt
+                // Gamma negativ = links geneigt
                 tilt = event.gamma;
 
                 // Debug
                 if (Math.random() < 0.03) {
-                    console.log('Gamma:', event.gamma, 'Tilt:', tilt);
+                    console.log('Gamma:', event.gamma, 'Beta:', event.beta, 'Tilt:', tilt);
                 }
             } else {
-                // Hochformat (sollte nicht passieren wegen Landscape-Lock)
+                // Hochformat
                 tilt = event.beta;
             }
 
-            // Normalisieren: -30° bis +30° wird zu -1 bis +1
-            tilt = Math.max(-30, Math.min(30, tilt));
-            gyroTilt = tilt / 30;
+            // Normalisieren: -25° bis +25° wird zu -1 bis +1
+            tilt = Math.max(-25, Math.min(25, tilt));
+            gyroTilt = tilt / 25;
 
-            // Debug nur gelegentlich
+            // Debug
             if (Math.random() < 0.02) {
                 console.log('Final Tilt:', tilt, 'GyroTilt:', gyroTilt);
             }
