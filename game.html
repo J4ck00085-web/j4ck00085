@@ -2,10 +2,10 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Space Shooter 2K</title>
     <style>
         * {
@@ -19,19 +19,30 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            width: 100vw;
             overflow: hidden;
             touch-action: none;
             font-family: Arial, sans-serif;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        html {
+            height: -webkit-fill-available;
         }
 
         canvas {
             border: 3px solid #0f0;
             width: 100vw;
             height: 100vh;
+            height: -webkit-fill-available;
             display: block;
             object-fit: contain;
             background: #000;
+            touch-action: none;
         }
 
         /* ===== SETTINGS BUTTON ===== */
@@ -327,11 +338,17 @@
         async function enterFullscreen() {
             const elem = document.documentElement;
             try {
+                // Desktop Fullscreen
                 if (elem.requestFullscreen) await elem.requestFullscreen();
                 else if (elem.webkitRequestFullscreen) await elem.webkitRequestFullscreen();
-                else if (elem.webkitEnterFullscreen) await elem.webkitEnterFullscreen();
                 else if (elem.mozRequestFullScreen) await elem.mozRequestFullScreen();
                 else if (elem.msRequestFullscreen) await elem.msRequestFullscreen();
+
+                // iOS: Adressleiste verstecken durch Scroll
+                if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                    window.scrollTo(0, 1);
+                    setTimeout(() => window.scrollTo(0, 0), 100);
+                }
             } catch (err) {
                 console.log("Fullscreen error:", err);
             }
