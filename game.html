@@ -15,7 +15,7 @@
         }
 
         body {
-            background: #000;
+            background: #000 url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23000" width="100" height="100"/><circle cx="10" cy="20" r="1" fill="%23fff" opacity="0.8"/><circle cx="80" cy="80" r="1.5" fill="%23fff" opacity="0.6"/><circle cx="50" cy="50" r="0.5" fill="%23fff" opacity="0.4"/></svg>') repeat;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -41,7 +41,7 @@
             height: -webkit-fill-available;
             display: block;
             object-fit: contain;
-            background: #000;
+            background: transparent;
             touch-action: none;
         }
 
@@ -596,58 +596,12 @@
 
         // ===== DRAW FUNCTIONS =====
         function drawBackground() {
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, W, H);
-
-            const gradient = ctx.createLinearGradient(0, 0, W, H);
-            gradient.addColorStop(0, 'rgba(30, 30, 50, 0)');
-            gradient.addColorStop(0.3, 'rgba(50, 50, 80, 0.15)');
-            gradient.addColorStop(0.5, 'rgba(70, 70, 100, 0.25)');
-            gradient.addColorStop(0.7, 'rgba(50, 50, 80, 0.15)');
-            gradient.addColorStop(1, 'rgba(30, 30, 50, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, W, H);
-
-            distantStars.forEach(s => {
-                ctx.fillStyle = `rgba(255, 255, 255, ${s.brightness})`;
-                ctx.fillRect(s.x, s.y, s.size, s.size);
-            });
-
-            stars.forEach(s => {
-                if (!isPaused) {
-                    s.brightness += s.twinkleSpeed;
-                    if (s.brightness > 1 || s.brightness < 0.4) {
-                        s.twinkleSpeed = -s.twinkleSpeed;
-                    }
-                    s.y += s.speed;
-                    if (s.y > H) {
-                        s.y = 0;
-                        s.x = Math.random() * W;
-                    }
-                }
-
-                const [r, g, b] = s.color === 'blue' ? [150, 180, 255] :
-                                  s.color === 'yellow' ? [255, 245, 200] : [255, 255, 255];
-
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${s.brightness})`;
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-                ctx.fill();
-
-                if (s.size > 1 && s.brightness > 0.7) {
-                    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${s.brightness * 0.5})`;
-                    ctx.lineWidth = 0.5;
-                    ctx.beginPath();
-                    ctx.moveTo(s.x - s.size * 3, s.y);
-                    ctx.lineTo(s.x + s.size * 3, s.y);
-                    ctx.moveTo(s.x, s.y - s.size * 3);
-                    ctx.lineTo(s.x, s.y + s.size * 3);
-                    ctx.stroke();
-                }
-            });
+            // Transparenter Hintergrund - Body-Hintergrund durchscheinen lassen
+            ctx.clearRect(0, 0, W, H);
         }
 
         function drawPlayerShip(x, y, w, h) {
+            // Hauptkörper
             ctx.fillStyle = '#0f0';
             ctx.beginPath();
             ctx.moveTo(x + w/2, y);
@@ -658,18 +612,34 @@
             ctx.closePath();
             ctx.fill();
 
+            // Flügel
             ctx.fillStyle = '#0a0';
             ctx.fillRect(x, y + h * 0.5, w * 0.2, h * 0.4);
             ctx.fillRect(x + w * 0.8, y + h * 0.5, w * 0.2, h * 0.4);
 
+            // Cockpit
             ctx.fillStyle = '#8f8';
             ctx.beginPath();
             ctx.arc(x + w/2, y + h * 0.5, w * 0.15, 0, Math.PI * 2);
             ctx.fill();
 
+            // Triebwerke
             ctx.fillStyle = '#0ff';
             ctx.fillRect(x + w * 0.35, y + h * 0.95, w * 0.1, h * 0.08);
             ctx.fillRect(x + w * 0.55, y + h * 0.95, w * 0.1, h * 0.08);
+
+            // DOPPELKANONE vorne am Schiff
+            ctx.fillStyle = '#0f0';
+            // Linke Kanone
+            ctx.fillRect(x + w * 0.3, y - h * 0.3, w * 0.08, h * 0.35);
+            ctx.fillStyle = '#ff0';
+            ctx.fillRect(x + w * 0.3, y - h * 0.32, w * 0.08, h * 0.1);
+
+            // Rechte Kanone
+            ctx.fillStyle = '#0f0';
+            ctx.fillRect(x + w * 0.62, y - h * 0.3, w * 0.08, h * 0.35);
+            ctx.fillStyle = '#ff0';
+            ctx.fillRect(x + w * 0.62, y - h * 0.32, w * 0.08, h * 0.1);
         }
 
         function drawEnemyShip(x, y, w, h, isBoss) {
