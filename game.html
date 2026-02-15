@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
     <title>Space Shooter</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -58,11 +61,11 @@
             transform: translate(-50%, -50%);
             background: rgba(0, 20, 0, 0.95);
             border: 3px solid #0f0;
-            border-radius: 20px;
-            padding: 30px;
+            border-radius: 15px;
+            padding: 20px;
             z-index: 3000;
             display: none;
-            min-width: 300px;
+            min-width: 200px;
         }
 
         .settings-menu.active {
@@ -71,21 +74,21 @@
 
         .settings-title {
             color: #0f0;
-            font-size: 32px;
+            font-size: 19px;
             font-family: Arial, sans-serif;
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             font-weight: bold;
         }
 
         .settings-option {
             background: rgba(0, 255, 0, 0.2);
             border: 2px solid #0f0;
-            border-radius: 10px;
-            padding: 15px 20px;
-            margin: 10px 0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 6px 0;
             color: #0f0;
-            font-size: 20px;
+            font-size: 14px;
             font-family: Arial, sans-serif;
             cursor: pointer;
             text-align: center;
@@ -173,7 +176,41 @@
             display: none;
         }
 
-        @media (max-width: 768px), (max-height: 768px) {
+        /* Querformat-Hinweis */
+        .landscape-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            color: #0f0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 9999;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .landscape-warning-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .landscape-warning-text {
+            font-size: 24px;
+        }
+
+        @media (max-width: 768px) and (orientation: portrait) {
+            .landscape-warning {
+                display: flex !important;
+            }
+        }
+
+        @media (min-width: 769px), (orientation: landscape) {
             .mobile-controls {
                 display: block !important;
             }
@@ -207,6 +244,12 @@
 
     <!-- Gyroscope Indicator -->
     <div class="gyro-indicator" id="gyroIndicator">📱 Neige dein Handy zum Steuern</div>
+
+    <!-- Landscape Warning -->
+    <div class="landscape-warning">
+        <div class="landscape-warning-icon">📱↻</div>
+        <div class="landscape-warning-text">Bitte drehe dein Gerät ins Querformat!</div>
+    </div>
 
     <script>
         // ===== CANVAS SETUP =====
@@ -290,17 +333,33 @@
             }
         }
 
+        // Screen Orientation auf Querformat sperren
+        function lockLandscape() {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(err => {
+                    console.log('Orientation lock not supported:', err);
+                });
+            }
+        }
+
         // Auto-Fullscreen beim ersten Touch/Click
         let fullscreenActivated = false;
         function tryEnterFullscreen() {
             if (!fullscreenActivated) {
                 enterFullscreen();
+                lockLandscape();
                 fullscreenActivated = true;
             }
         }
 
-        document.addEventListener('click', tryEnterFullscreen, { once: true });
-        document.addEventListener('touchstart', tryEnterFullscreen, { once: true });
+        // Auf Mobile sofort beim Laden versuchen
+        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            document.addEventListener('touchstart', tryEnterFullscreen, { once: true });
+            // Backup: auch bei click
+            document.addEventListener('click', tryEnterFullscreen, { once: true });
+        } else {
+            document.addEventListener('click', tryEnterFullscreen, { once: true });
+        }
 
         // ===== SETTINGS MENU =====
         const settingsBtn = document.getElementById('settingsBtn');
@@ -421,38 +480,67 @@
         }
 
         function startGyroscope() {
+            console.log('Gyroscope started');
             window.addEventListener('deviceorientation', handleOrientation);
             gyroEnabled = true;
+
+            // Indicator anzeigen
             gyroIndicator.style.display = 'block';
             setTimeout(() => {
                 gyroIndicator.style.display = 'none';
-            }, 3000);
+            }, 4000);
+
+            // Debug: Ersten Wert ausgeben
+            setTimeout(() => {
+                console.log('Gyro enabled:', gyroEnabled, 'Tilt:', gyroTilt);
+            }, 1000);
         }
 
         function handleOrientation(event) {
-            // Gamma: Links-Rechts-Neigung (-90 bis 90)
-            let gamma = event.gamma;
+            if (!event.gamma || !event.beta) return;
 
-            // Querformat-Unterstützung
+            let tilt = 0;
+
+            // Querformat (bevorzugt)
             if (window.innerWidth > window.innerHeight) {
-                // Im Querformat Beta verwenden
-                gamma = event.beta - 90; // Beta umrechnen
+                // Beta verwenden: Vorne-Hinten wird zu Links-Rechts im Querformat
+                tilt = event.beta;
+
+                // Korrektur: Im Querformat liegt Beta bei ~0 wenn flach
+                // Neigung nach links = negative Beta, rechts = positive Beta
+                if (tilt > 90) tilt = 90 - (tilt - 90); // Umklappen verhindern
+                if (tilt < -90) tilt = -90 - (tilt + 90);
+            } else {
+                // Hochformat (Fallback)
+                tilt = event.gamma;
             }
 
-            // Normalisieren: -30° bis +30° wird zu -1 bis +1
-            if (gamma < -30) gamma = -30;
-            if (gamma > 30) gamma = 30;
-            gyroTilt = gamma / 30;
+            // Normalisieren: -25° bis +25° wird zu -1 bis +1
+            if (tilt < -25) tilt = -25;
+            if (tilt > 25) tilt = 25;
+            gyroTilt = tilt / 25;
         }
 
         // Bei erstem Touch Gyroscope aktivieren (Mobile)
         let gyroActivated = false;
-        document.addEventListener('touchstart', () => {
-            if (!gyroActivated && /Mobi|Android/i.test(navigator.userAgent)) {
+        function activateGyroOnTouch() {
+            if (!gyroActivated) {
+                console.log('Activating gyroscope...');
                 enableGyroscope();
                 gyroActivated = true;
             }
-        }, { once: true });
+        }
+
+        // Mehrere Events versuchen für bessere Kompatibilität
+        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            document.addEventListener('touchstart', activateGyroOnTouch, { once: true });
+            document.addEventListener('click', activateGyroOnTouch, { once: true });
+            // Settings-Button klick soll auch Gyro aktivieren
+            setTimeout(() => {
+                const settingsBtn = document.getElementById('settingsBtn');
+                settingsBtn.addEventListener('click', activateGyroOnTouch, { once: true });
+            }, 100);
+        }
 
         // ===== MOBILE SHOOT BUTTONS =====
         shootBtnLeft.addEventListener('touchstart', (e) => {
