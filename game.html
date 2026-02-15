@@ -176,6 +176,59 @@
             display: none;
         }
 
+        /* Start Screen für iOS */
+        .start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            color: #0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .start-screen.hidden {
+            display: none;
+        }
+
+        .start-title {
+            font-size: 48px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .start-button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            border-radius: 15px;
+            padding: 20px 40px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 15px;
+            min-width: 250px;
+        }
+
+        .start-button:active {
+            background: #0a0;
+            transform: scale(0.95);
+        }
+
+        .start-info {
+            font-size: 18px;
+            margin-top: 30px;
+            color: #8f8;
+        }
+
         /* Querformat-Hinweis */
         .landscape-warning {
             position: fixed;
@@ -245,6 +298,13 @@
     <!-- Gyroscope Indicator -->
     <div class="gyro-indicator" id="gyroIndicator">📱 Neige dein Handy zum Steuern</div>
 
+    <!-- Start Screen für Mobile -->
+    <div class="start-screen" id="startScreen">
+        <div class="start-title">🚀 SPACE SHOOTER 🚀</div>
+        <button class="start-button" id="startButton">SPIEL STARTEN</button>
+        <div class="start-info">📱 Neige dein Handy zum Steuern<br>🔥 Tippe zum Schießen</div>
+    </div>
+
     <!-- Landscape Warning -->
     <div class="landscape-warning">
         <div class="landscape-warning-icon">📱↻</div>
@@ -300,20 +360,24 @@
         let gyroEnabled = false;
 
         // ===== FULLSCREEN =====
-        function enterFullscreen() {
+        async function enterFullscreen() {
             const elem = document.documentElement;
             try {
                 if (elem.requestFullscreen) {
-                    elem.requestFullscreen();
+                    await elem.requestFullscreen();
                 } else if (elem.webkitRequestFullscreen) {
-                    elem.webkitRequestFullscreen();
+                    await elem.webkitRequestFullscreen();
+                } else if (elem.webkitEnterFullscreen) {
+                    await elem.webkitEnterFullscreen();
                 } else if (elem.mozRequestFullScreen) {
-                    elem.mozRequestFullScreen();
+                    await elem.mozRequestFullScreen();
                 } else if (elem.msRequestFullscreen) {
-                    elem.msRequestFullscreen();
+                    await elem.msRequestFullscreen();
                 }
+                console.log('Fullscreen success');
             } catch (err) {
-                console.log("Fullscreen not supported:", err);
+                console.log("Fullscreen error:", err);
+                // Nicht werfen - Fullscreen ist optional
             }
         }
 
@@ -352,12 +416,8 @@
             }
         }
 
-        // Auf Mobile sofort beim Laden versuchen
-        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-            document.addEventListener('touchstart', tryEnterFullscreen, { once: true });
-            // Backup: auch bei click
-            document.addEventListener('click', tryEnterFullscreen, { once: true });
-        } else {
+        // Desktop: Auto-Fullscreen
+        if (!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
             document.addEventListener('click', tryEnterFullscreen, { once: true });
         }
 
@@ -462,35 +522,6 @@
         const shootBtnLeft = document.getElementById('shootBtnLeft');
         const shootBtnRight = document.getElementById('shootBtnRight');
 
-        // Gyroscope aktivieren
-        function enableGyroscope() {
-            console.log('enableGyroscope called');
-
-            // iOS 13+ Permission
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                console.log('Requesting iOS permission...');
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        console.log('Permission state:', permissionState);
-                        if (permissionState === 'granted') {
-                            startGyroscope();
-                        } else {
-                            alert('Gyroscope permission denied. Bitte erlaube den Zugriff in den Einstellungen.');
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Permission error:', err);
-                        alert('Gyroscope-Fehler: ' + err);
-                    });
-            } else if (typeof DeviceOrientationEvent !== 'undefined') {
-                // Android und ältere iOS
-                console.log('Starting gyroscope (no permission needed)');
-                startGyroscope();
-            } else {
-                console.log('DeviceOrientation not supported');
-                alert('Dein Gerät unterstützt kein Gyroscope');
-            }
-        }
 
         function startGyroscope() {
             console.log('Gyroscope started - adding event listener');
@@ -537,32 +568,80 @@
             }
         }
 
-        // Gyroscope sofort bei erstem Touch aktivieren
-        let gyroActivated = false;
-        function activateGyro(e) {
-            if (!gyroActivated) {
-                console.log('Touch detected - activating gyroscope');
-                e.preventDefault();
-                enableGyroscope();
-                gyroActivated = true;
+        // Start Screen Handler
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('startButton');
 
-                // Auch Fullscreen versuchen
-                tryEnterFullscreen();
-            }
+        let gameStarted = false;
+        let gyroActivated = false;
+
+        // Desktop: Kein Start-Screen
+        if (!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            startScreen.classList.add('hidden');
+            gameStarted = true;
         }
 
-        // Auf Mobile-Geräten
-        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-            console.log('Mobile detected');
+        // Start Button Click Handler
+        startButton.addEventListener('click', async function(e) {
+            console.log('START button clicked');
+            e.preventDefault();
 
-            // Bei jedem Touch versuchen (wichtig für iOS)
-            document.addEventListener('touchstart', activateGyro, { once: true });
+            try {
+                // 1. Fullscreen aktivieren
+                console.log('Trying fullscreen...');
+                await enterFullscreen();
+                lockLandscape();
+                console.log('Fullscreen activated');
 
-            // Auch Shoot-Buttons nutzen
-            setTimeout(() => {
-                shootBtnLeft.addEventListener('touchstart', activateGyro, { once: true });
-                shootBtnRight.addEventListener('touchstart', activateGyro, { once: true });
-            }, 100);
+                // 2. Gyroscope aktivieren
+                console.log('Trying gyroscope...');
+                await enableGyroscope();
+                console.log('Gyroscope activated');
+
+                // 3. Start Screen ausblenden
+                startScreen.classList.add('hidden');
+                gameStarted = true;
+                gyroActivated = true;
+
+                console.log('Game started!');
+            } catch (err) {
+                console.error('Start error:', err);
+                alert('Fehler beim Starten: ' + err.message);
+            }
+        });
+
+        // Gyroscope aktivieren (Promise-basiert)
+        async function enableGyroscope() {
+            console.log('enableGyroscope called');
+
+            return new Promise((resolve, reject) => {
+                // iOS 13+ Permission
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    console.log('Requesting iOS permission...');
+                    DeviceOrientationEvent.requestPermission()
+                        .then(permissionState => {
+                            console.log('Permission state:', permissionState);
+                            if (permissionState === 'granted') {
+                                startGyroscope();
+                                resolve();
+                            } else {
+                                reject(new Error('Gyroscope permission denied'));
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Permission error:', err);
+                            reject(err);
+                        });
+                } else if (typeof DeviceOrientationEvent !== 'undefined') {
+                    // Android
+                    console.log('Starting gyroscope (no permission needed)');
+                    startGyroscope();
+                    resolve();
+                } else {
+                    console.log('DeviceOrientation not supported');
+                    reject(new Error('Gyroscope not supported'));
+                }
+            });
         }
 
         // ===== MOBILE SHOOT BUTTONS =====
