@@ -278,14 +278,14 @@
     </div>
 
     <div class="mobile-controls">
-        <button class="shoot-btn shoot-btn-left" id="shootBtnLeft">🔥</button>
-        <button class="shoot-btn shoot-btn-right" id="shootBtnRight">🔥</button>
+        <button class="shoot-btn shoot-btn-left" id="shootBtnLeft">◀️</button>
+        <button class="shoot-btn shoot-btn-right" id="shootBtnRight">▶️</button>
     </div>
 
     <div class="start-screen" id="startScreen">
         <div class="start-title">🚀 *-*SterMoe*-* 🚀</div>
         <button class="start-button" id="startButton">SPIEL STARTEN</button>
-        <div class="start-info">📱 Halte dein Handy FLACH im Querformat<br>🎮 Kippe Links/Rechts zum Lenken<br>🔥 Tippe zum Schießen</div>
+        <div class="start-info">📱 Halte dein Handy FLACH im Querformat<br>🎮 Kippe Links/Rechts zum Lenken<br>🔥 Links = Linker Laser | Rechts = Rechter Laser<br>💥 Halte gedrückt für Burst-Laser (3x schnell)</div>
     </div>
 
     <div class="landscape-warning">
@@ -322,7 +322,7 @@
             ENEMY_NORMAL: 40,
             ENEMY_BOSS: 80,
             POWERUP: 65,
-            BULLET: { width: 4, height: 10 }
+            LASER: { width: 6, height: 25 }
         };
 
         const POINTS = {
@@ -339,7 +339,8 @@
             BOSS_TERTIARY: '#ffaa00',
             BOSS_ENGINE: '#dd6600',
             ENEMY: '#f00',
-            BULLET: '#ff0',
+            LASER_LEFT: '#0ff',
+            LASER_RIGHT: '#f0f',
             ICE: '#00ddff',
             FIRE: '#ff6600',
             MAGNET: '#ff00ff',
@@ -361,13 +362,14 @@
 
         let gameState = {
             player: { x: 1230, y: 1340, ...playerSize },
-            bullets: [],
+            secondShip: null, // Zweites Schiff (wingman)
+            lasers: [],
             enemies: [],
             powerups: [],
             explosions: [],
             score: 0,
             weaponType: 'normal',
-            rapidFireTimer: 0,
+            burstMode: { active: false, count: 0, cooldown: 0 },
             isPaused: false,
             soundEnabled: true,
             gameStarted: false
@@ -388,14 +390,16 @@
             moveLeft: false,
             moveRight: false,
             gyroTilt: 0,
-            gyroEnabled: false
+            gyroEnabled: false,
+            shootLeft: false,
+            shootRight: false
         };
 
         // ==================== POWER-UP DEFINITIONS ====================
         const POWERUP_TYPES = [
             'ice_slow_self', 'ice_slow_enemies', 'ice_ultra',
-            'fire_rapid', 'fire_explosion', 'fire_trail',
-            'magnet_pull', 'magnet_shield', 'magnet_auto',
+            'fire_rapid', 'fire_explosion', 'fire_spread',
+            'magnet_pull', 'magnet_shield', 'magnet_wingman',
             'electric_chain', 'electric_stun', 'electric_overcharge',
             'boost_speed', 'boost_triple', 'boost_invincible'
         ];
@@ -427,13 +431,14 @@
             clearActiveTimers();
             gameState = {
                 player: { x: 1230, y: 1340, ...playerSize },
-                bullets: [],
+                secondShip: null,
+                lasers: [],
                 enemies: [],
                 powerups: [],
                 explosions: [],
                 score: 0,
                 weaponType: 'normal',
-                rapidFireTimer: 0,
+                burstMode: { active: false, count: 0, cooldown: 0 },
                 isPaused: false,
                 soundEnabled: gameState.soundEnabled,
                 gameStarted: gameState.gameStarted
@@ -587,12 +592,15 @@
             if (gameState.isPaused) return;
             if (e.key === 'ArrowLeft') controls.moveLeft = true;
             if (e.key === 'ArrowRight') controls.moveRight = true;
-            if (e.key === ' ' && !e.repeat) shoot();
+            if (e.key === 'a' || e.key === 'A') controls.shootLeft = true;
+            if (e.key === 'd' || e.key === 'D') controls.shootRight = true;
         });
 
         document.addEventListener('keyup', e => {
             if (e.key === 'ArrowLeft') controls.moveLeft = false;
             if (e.key === 'ArrowRight') controls.moveRight = false;
+            if (e.key === 'a' || e.key === 'A') controls.shootLeft = false;
+            if (e.key === 'd' || e.key === 'D') controls.shootRight = false;
         });
 
         // ==================== MOBILE CONTROLS ====================
@@ -601,12 +609,22 @@
 
         shootBtnLeft.addEventListener('touchstart', e => {
             e.preventDefault();
-            shoot();
+            controls.shootLeft = true;
+        });
+
+        shootBtnLeft.addEventListener('touchend', e => {
+            e.preventDefault();
+            controls.shootLeft = false;
         });
 
         shootBtnRight.addEventListener('touchstart', e => {
             e.preventDefault();
-            shoot();
+            controls.shootRight = true;
+        });
+
+        shootBtnRight.addEventListener('touchend', e => {
+            e.preventDefault();
+            controls.shootRight = false;
         });
 
         // ==================== START SCREEN ====================
@@ -632,20 +650,19 @@
         });
 
         // ==================== GAME FUNCTIONS ====================
-        function shoot() {
+        function shootLaser(side, fromShip = gameState.player) {
             if (gameState.isPaused) return;
-            const { player } = gameState;
-            const bulletSize = SIZES.BULLET;
 
-            if (gameState.weaponType === 'triple') {
-                gameState.bullets.push(
-                    { x: player.x + 15, y: player.y, ...bulletSize },
-                    { x: player.x + 23, y: player.y, ...bulletSize },
-                    { x: player.x + 31, y: player.y, ...bulletSize }
-                );
-            } else {
-                gameState.bullets.push({ x: player.x + 23, y: player.y, ...bulletSize });
-            }
+            const laserSize = SIZES.LASER;
+            const offsetX = side === 'left' ? fromShip.width * 0.25 : fromShip.width * 0.75;
+
+            gameState.lasers.push({
+                x: fromShip.x + offsetX - laserSize.width / 2,
+                y: fromShip.y - laserSize.height,
+                ...laserSize,
+                side: side,
+                spread: gameState.weaponType === 'spread'
+            });
         }
 
         function createExplosion(x, y, radius) {
@@ -664,8 +681,6 @@
         }
 
         function applyPowerUp(type) {
-            const { score } = gameState;
-
             // KÄLTE
             if (type === 'ice_slow_self') {
                 effects.playerSpeed = 0.5;
@@ -680,24 +695,34 @@
             }
             // FEUER
             else if (type === 'fire_rapid') {
-                gameState.rapidFireTimer = 500;
+                effects.playerSpeed = 1.5;
+                addTimer(() => effects.playerSpeed = 1, 8000);
             } else if (type === 'fire_explosion') {
                 gameState.enemies.forEach(e => createExplosion(e.x + e.width/2, e.y + e.height/2, 80));
                 gameState.score += gameState.enemies.length * 20;
                 gameState.enemies = [];
-            } else if (type === 'fire_trail') {
-                gameState.weaponType = 'triple';
-                addTimer(() => gameState.weaponType = 'normal', 12000);
+            } else if (type === 'fire_spread') {
+                // SPREAD LASER - Auffächern wie Lichtkegel
+                gameState.weaponType = 'spread';
+                addTimer(() => gameState.weaponType = 'normal', 15000);
             }
             // MAGNET
             else if (type === 'magnet_pull') {
                 gameState.score += 150;
             } else if (type === 'magnet_shield') {
                 effects.invincible = 300;
-            } else if (type === 'magnet_auto') {
-                gameState.rapidFireTimer = 400;
-                gameState.weaponType = 'triple';
-                addTimer(() => gameState.weaponType = 'normal', 8000);
+            } else if (type === 'magnet_wingman') {
+                // WINGMAN - Zweites Schiff für 45 Sekunden
+                if (!gameState.secondShip) {
+                    gameState.secondShip = {
+                        x: gameState.player.x + 150,
+                        y: gameState.player.y,
+                        ...playerSize
+                    };
+                    addTimer(() => {
+                        gameState.secondShip = null;
+                    }, 45000);
+                }
             }
             // STROM
             else if (type === 'electric_chain') {
@@ -707,21 +732,16 @@
                 effects.enemySpeed = 0.3;
                 addTimer(() => effects.enemySpeed = 1, 6000);
             } else if (type === 'electric_overcharge') {
-                gameState.rapidFireTimer = 600;
-                effects.playerSpeed = 1.5;
-                addTimer(() => effects.playerSpeed = 1, 8000);
+                effects.playerSpeed = 1.8;
+                addTimer(() => effects.playerSpeed = 1, 10000);
             }
             // BOOSTER
             else if (type === 'boost_speed') {
                 effects.playerSpeed = 2;
                 addTimer(() => effects.playerSpeed = 1, 7000);
             } else if (type === 'boost_triple') {
-                gameState.weaponType = 'triple';
-                effects.playerSpeed = 1.3;
-                addTimer(() => {
-                    gameState.weaponType = 'normal';
-                    effects.playerSpeed = 1;
-                }, 10000);
+                effects.playerSpeed = 1.5;
+                addTimer(() => effects.playerSpeed = 1, 12000);
             } else if (type === 'boost_invincible') {
                 effects.invincible = 500;
                 effects.playerSpeed = 1.2;
@@ -934,23 +954,29 @@
 
             let yOffset = 140;
 
-            if (gameState.weaponType === 'triple') {
+            if (gameState.weaponType === 'spread') {
                 ctx.fillStyle = '#fa0';
                 ctx.font = '40px Arial';
-                ctx.fillText('🔥 TRIPLE SHOT', 30, yOffset);
+                ctx.fillText('🔥 SPREAD LASER', 30, yOffset);
                 yOffset += 60;
             }
 
-            if (gameState.rapidFireTimer > 0) {
+            if (gameState.secondShip) {
                 ctx.fillStyle = '#0af';
                 ctx.font = '40px Arial';
-                ctx.fillText('⚡ RAPID FIRE', 30, yOffset);
+                ctx.fillText('🚁 WINGMAN ACTIVE', 30, yOffset);
+                yOffset += 60;
             }
+
+            // Steuerungshinweise
+            ctx.fillStyle = '#8f8';
+            ctx.font = '30px Arial';
+            ctx.fillText('A = Links Laser | D = Rechts Laser', CANVAS.WIDTH - 580, 80);
         }
 
         // ==================== GAME LOOP ====================
         function updateGame() {
-            const { player } = gameState;
+            const { player, secondShip } = gameState;
 
             // Player Movement
             if (controls.gyroEnabled && Math.abs(controls.gyroTilt) > 0.05) {
@@ -961,21 +987,71 @@
             }
             player.x = Math.max(0, Math.min(CANVAS.WIDTH - player.width, player.x));
 
-            // Bullets
-            gameState.bullets.forEach((b, i) => {
-                b.y -= SPEEDS.BULLET;
-                if (b.y < 0) gameState.bullets.splice(i, 1);
+            // Second Ship Movement (folgt dem Player mit Abstand)
+            if (secondShip) {
+                const targetX = player.x + 120;
+                const diff = targetX - secondShip.x;
+                secondShip.x += diff * 0.1; // Smooth following
+                secondShip.y = player.y;
+            }
+
+            // BURST LASER SHOOTING
+            if (gameState.burstMode.cooldown > 0) {
+                gameState.burstMode.cooldown--;
+            }
+
+            // Burst Mode: 3 Laser kurz hintereinander, dann Pause
+            if ((controls.shootLeft || controls.shootRight) && gameState.burstMode.cooldown === 0) {
+                if (!gameState.burstMode.active) {
+                    gameState.burstMode.active = true;
+                    gameState.burstMode.count = 0;
+                }
+
+                if (gameState.burstMode.count < 3) {
+                    if (gameState.burstMode.count === 0 || (Date.now() % 7 === 0)) {
+                        if (controls.shootLeft) {
+                            shootLaser('left', player);
+                            if (secondShip) shootLaser('left', secondShip);
+                        }
+                        if (controls.shootRight) {
+                            shootLaser('right', player);
+                            if (secondShip) shootLaser('right', secondShip);
+                        }
+                        gameState.burstMode.count++;
+                    }
+                } else {
+                    // Nach 3 Schüssen: Pause
+                    gameState.burstMode.cooldown = 20;
+                    gameState.burstMode.count = 0;
+                }
+            } else if (!controls.shootLeft && !controls.shootRight) {
+                gameState.burstMode.active = false;
+                gameState.burstMode.count = 0;
+            }
+
+            // Lasers
+            gameState.lasers.forEach((laser, i) => {
+                if (laser.spread) {
+                    // SPREAD LASER - Fächert sich auf
+                    const progress = (CANVAS.HEIGHT - laser.y) / CANVAS.HEIGHT;
+                    const maxSpread = CANVAS.WIDTH / 2 - player.x - player.width / 2;
+                    const spreadAmount = maxSpread * progress * (laser.side === 'left' ? -1 : 1);
+                    laser.x += spreadAmount * 0.08;
+                }
+
+                laser.y -= SPEEDS.BULLET * 1.2;
+                if (laser.y < -laser.height) gameState.lasers.splice(i, 1);
             });
 
             // Enemies
             gameState.enemies.forEach((e, i) => {
                 e.y += (e.isBoss ? SPEEDS.ENEMY_BOSS : SPEEDS.ENEMY_NORMAL) * effects.enemySpeed;
 
-                gameState.bullets.forEach((b, bi) => {
-                    if (b.x < e.x + e.width && b.x + b.width > e.x &&
-                        b.y < e.y + e.height && b.y + b.height > e.y) {
+                gameState.lasers.forEach((laser, li) => {
+                    if (laser.x < e.x + e.width && laser.x + laser.width > e.x &&
+                        laser.y < e.y + e.height && laser.y + laser.height > e.y) {
                         e.health--;
-                        gameState.bullets.splice(bi, 1);
+                        gameState.lasers.splice(li, 1);
                         if (e.health <= 0) {
                             if (e.isBoss) {
                                 createExplosion(e.x + e.width/2, e.y + e.height/2, Math.max(e.width, e.height) * 1.8);
@@ -1006,30 +1082,48 @@
 
                 if (p.y > CANVAS.HEIGHT) gameState.powerups.splice(i, 1);
             });
+        }
 
-            // Rapid Fire
-            if (gameState.rapidFireTimer > 0) {
-                gameState.rapidFireTimer--;
-                if (gameState.rapidFireTimer % 10 === 0) {
-                    gameState.bullets.push({
-                        x: player.x + 23,
-                        y: player.y,
-                        ...SIZES.BULLET
-                    });
-                }
-            }
+        function drawLaser(laser) {
+            ctx.save();
+
+            const color = laser.side === 'left' ? COLORS.LASER_LEFT : COLORS.LASER_RIGHT;
+
+            // Laser Glow
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 20;
+
+            // Laser Gradient
+            const gradient = ctx.createLinearGradient(laser.x, laser.y, laser.x, laser.y + laser.height);
+            gradient.addColorStop(0, color);
+            gradient.addColorStop(0.5, color + 'dd');
+            gradient.addColorStop(1, color + '66');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
+
+            // Inner Core
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(laser.x + laser.width * 0.3, laser.y, laser.width * 0.4, laser.height);
+
+            ctx.restore();
         }
 
         function renderGame() {
             ctx.clearRect(0, 0, CANVAS.WIDTH, CANVAS.HEIGHT);
 
+            // Main Player Ship
             drawPlayerShip(gameState.player.x, gameState.player.y, gameState.player.width, gameState.player.height);
+
+            // Second Ship (Wingman)
+            if (gameState.secondShip) {
+                drawPlayerShip(gameState.secondShip.x, gameState.secondShip.y, gameState.secondShip.width, gameState.secondShip.height);
+            }
+
             drawExplosions();
 
-            gameState.bullets.forEach(b => {
-                ctx.fillStyle = COLORS.BULLET;
-                ctx.fillRect(b.x, b.y, b.width, b.height);
-            });
+            // Lasers
+            gameState.lasers.forEach(laser => drawLaser(laser));
 
             gameState.enemies.forEach(e => drawEnemyShip(e.x, e.y, e.width, e.height, e.isBoss));
             gameState.powerups.forEach(p => drawPowerUp(p.x, p.y, p.width, p.height, p.type));
