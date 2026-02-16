@@ -369,7 +369,7 @@
             explosions: [],
             score: 0,
             weaponType: 'normal',
-            burstMode: { active: false, count: 0, cooldown: 0 },
+            burstMode: { active: false, count: 0, cooldown: 0, frameCounter: 0 },
             isPaused: false,
             soundEnabled: true,
             gameStarted: false
@@ -438,7 +438,7 @@
                 explosions: [],
                 score: 0,
                 weaponType: 'normal',
-                burstMode: { active: false, count: 0, cooldown: 0 },
+                burstMode: { active: false, count: 0, cooldown: 0, frameCounter: 0 },
                 isPaused: false,
                 soundEnabled: gameState.soundEnabled,
                 gameStarted: gameState.gameStarted
@@ -1002,35 +1002,37 @@
 
             // Burst Mode: 3 Laser kurz hintereinander, dann Pause
             if ((controls.shootLeft || controls.shootRight) && gameState.burstMode.cooldown === 0) {
-                if (!gameState.burstMode.active) {
-                    gameState.burstMode.active = true;
-                    gameState.burstMode.count = 0;
+                gameState.burstMode.frameCounter++;
+
+                // Schieße alle 5 Frames einen Laser (3x total)
+                if (gameState.burstMode.frameCounter % 5 === 0 && gameState.burstMode.count < 3) {
+                    if (controls.shootLeft) {
+                        shootLaser('left', player);
+                        if (secondShip) shootLaser('left', secondShip);
+                    }
+                    if (controls.shootRight) {
+                        shootLaser('right', player);
+                        if (secondShip) shootLaser('right', secondShip);
+                    }
+                    gameState.burstMode.count++;
                 }
 
-                if (gameState.burstMode.count < 3) {
-                    if (gameState.burstMode.count === 0 || (Date.now() % 7 === 0)) {
-                        if (controls.shootLeft) {
-                            shootLaser('left', player);
-                            if (secondShip) shootLaser('left', secondShip);
-                        }
-                        if (controls.shootRight) {
-                            shootLaser('right', player);
-                            if (secondShip) shootLaser('right', secondShip);
-                        }
-                        gameState.burstMode.count++;
-                    }
-                } else {
-                    // Nach 3 Schüssen: Pause
-                    gameState.burstMode.cooldown = 20;
+                // Nach 3 Schüssen: Pause
+                if (gameState.burstMode.count >= 3) {
+                    gameState.burstMode.cooldown = 25;
                     gameState.burstMode.count = 0;
+                    gameState.burstMode.frameCounter = 0;
                 }
             } else if (!controls.shootLeft && !controls.shootRight) {
                 gameState.burstMode.active = false;
                 gameState.burstMode.count = 0;
+                gameState.burstMode.frameCounter = 0;
             }
 
-            // Lasers
-            gameState.lasers.forEach((laser, i) => {
+            // Lasers (Rückwärts iterieren für sichere Splice-Operation)
+            for (let i = gameState.lasers.length - 1; i >= 0; i--) {
+                const laser = gameState.lasers[i];
+
                 if (laser.spread) {
                     // SPREAD LASER - Fächert sich auf
                     const progress = (CANVAS.HEIGHT - laser.y) / CANVAS.HEIGHT;
@@ -1040,14 +1042,19 @@
                 }
 
                 laser.y -= SPEEDS.BULLET * 1.2;
-                if (laser.y < -laser.height) gameState.lasers.splice(i, 1);
-            });
+                if (laser.y < -laser.height) {
+                    gameState.lasers.splice(i, 1);
+                }
+            }
 
-            // Enemies
-            gameState.enemies.forEach((e, i) => {
+            // Enemies (Rückwärts iterieren für sichere Splice-Operation)
+            for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+                const e = gameState.enemies[i];
                 e.y += (e.isBoss ? SPEEDS.ENEMY_BOSS : SPEEDS.ENEMY_NORMAL) * effects.enemySpeed;
 
-                gameState.lasers.forEach((laser, li) => {
+                // Kollision mit Lasern
+                for (let li = gameState.lasers.length - 1; li >= 0; li--) {
+                    const laser = gameState.lasers[li];
                     if (laser.x < e.x + e.width && laser.x + laser.width > e.x &&
                         laser.y < e.y + e.height && laser.y + laser.height > e.y) {
                         e.health--;
@@ -1058,30 +1065,36 @@
                             }
                             gameState.enemies.splice(i, 1);
                             gameState.score += e.isBoss ? POINTS.ENEMY_BOSS : POINTS.ENEMY_NORMAL;
+                            break; // Gegner ist tot, keine weiteren Kollisionen prüfen
                         }
                     }
-                });
+                }
 
+                // Gegner außerhalb des Bildschirms
                 if (e.y > CANVAS.HEIGHT) {
                     if (e.isBoss) {
                         createExplosion(e.x + e.width/2, CANVAS.HEIGHT, Math.max(e.width, e.height) * 1.8);
                     }
                     gameState.enemies.splice(i, 1);
                 }
-            });
+            }
 
-            // PowerUps
-            gameState.powerups.forEach((p, i) => {
+            // PowerUps (Rückwärts iterieren für sichere Splice-Operation)
+            for (let i = gameState.powerups.length - 1; i >= 0; i--) {
+                const p = gameState.powerups[i];
                 p.y += SPEEDS.POWERUP;
 
                 if (player.x < p.x + p.width && player.x + player.width > p.x &&
                     player.y < p.y + p.height && player.y + player.height > p.y) {
                     applyPowerUp(p.type);
                     gameState.powerups.splice(i, 1);
+                    continue;
                 }
 
-                if (p.y > CANVAS.HEIGHT) gameState.powerups.splice(i, 1);
-            });
+                if (p.y > CANVAS.HEIGHT) {
+                    gameState.powerups.splice(i, 1);
+                }
+            }
         }
 
         function drawLaser(laser) {
